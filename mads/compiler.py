@@ -20,6 +20,7 @@ class compiler(object):
         self.refs = []
     
     def i_find_refs(self):
+        self.options.log("compiler", "finding references", 2)
         for primary_scene in self.tokens:
             for secondary_scene in self.tokens[primary_scene]:
                 if self.tokens[primary_scene][secondary_scene]["type"] == "config":
@@ -200,6 +201,7 @@ class compiler(object):
                     dbg.error("support error", msg, line_num)
         
     def i_parse_required(self):
+        self.options.log("compiler", "resolving required fields", 2)
         ... # TODO: implement me!
 
     def parse(self):
@@ -215,6 +217,7 @@ class compiler(object):
                 scene = self.tokens[primary_scene][secondary_scene]
 
                 if scene["type"] == "config": # if .info configuration
+                    self.options.log("compiler", "compiling configuration", 2)
                     primary_fields = self.i_parse_info_fields(scene["fields"])
                     for field in primary_fields:
                         self.i_parse_info_primary(field)
@@ -244,8 +247,8 @@ class compiler(object):
                                         dbg.error("name error", "compiler option does not exist", field["line_nums"][-1])
                                 case [*_]:
                                     dbg.error("name error", "invalid option", field["line_nums"][-1])
-
                 elif scene["type"] == "ref": # if reference
+                    self.options.log("compiler", "compiling reference " + scene["ref"], 3)
                     # create the secondary scene
                     self.data[primary_scene][secondary_scene] = self.i_parse_ref(primary_scene
                                                                                  ,secondary_scene
@@ -254,6 +257,7 @@ class compiler(object):
                                                                                  ,[],[]
                                                                                  ,scene["file_name"])
                 else:
+                    self.options.log("compiler", "compiling tag " + primary_scene + "." + secondary_scene, 3)
                     defualt = {
                         self.co["output.interactions"]: {},
                         self.co["output.options"]: {},

@@ -91,7 +91,7 @@ if __name__ == "__main__":
   args_parser.add_argument("--boring", "-B", action="store_true")
 
   args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle"], default="json")
-  args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3], default=1)
+  args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3], default=1, type=int)
 
   args_parser.add_argument('positionals', metavar='N', type=str, nargs='*')
 

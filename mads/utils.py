@@ -104,5 +104,7 @@ class options(object):
     # 2: minor milestones
     # 3: debug messages
     def log(self, log_type, log_text, log_severity):
-        if self.log_severity <= log_severity:
-            print(log_type, ":", log_text)
+        maximum_length = len("preprocessor")
+        if log_severity <= self.log_severity:
+            log_type_msg = log_type + " "*(maximum_length-len(log_type))
+            print("[ " + str(round(time.time()*1000)) + "ms ] " + log_type_msg, ":" + " "*log_severity + log_text)

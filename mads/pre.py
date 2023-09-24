@@ -45,7 +45,7 @@ class preprocesser(object):
                       ,self.lines
                       ,self.file_name)
         else:
-            self.options.log("preprocessor", "new file imported '" + path + "'", 1)
+            self.options.log("preprocessor", "new file imported '" + path + "'", 2)
             new_file_body = parse_file(path)
             if new_file_body == 0:
                 pre_error("file error", "file '" + path + "' does not exist"

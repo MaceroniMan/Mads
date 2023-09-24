@@ -338,9 +338,6 @@ class tokenizer(object):
                         dbg.error("syntax error", "not allowed inside of .info", self.line_num)
                     else:
                         self._option(match, indentation)
-                elif (match := self.PREPROCESSER.match(line)) != None:
-                    pass
                 else:
-                    print("line", line, self.line_num, self.lines)
                     dbg = utils.dbg(self.scope_tree, self.scope_lines, self.lines, self.file_name)
                     dbg.error("syntax error", "malformed line", self.line_num)
