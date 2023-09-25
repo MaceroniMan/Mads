@@ -1,5 +1,7 @@
-from const import COMPILEROPTIONS, VERSION
+from const import COMPILEROPTIONS, VERSION, REGEX
 import utils
+
+import re
 
 class compiler(object):
     def __init__(self, tokenizer, options):
@@ -18,9 +20,11 @@ class compiler(object):
         self.co = COMPILEROPTIONS.copy()
 
         self.refs = []
+
+        self.STRINGFMT = re.compile(REGEX["STRINGFMT"])
     
     def i_find_refs(self):
-        self.options.log("compiler", "finding references", 2)
+        self.options.log("compiler", "finding references", 3)
         for primary_scene in self.tokens:
             for secondary_scene in self.tokens[primary_scene]:
                 if self.tokens[primary_scene][secondary_scene]["type"] == "config":
@@ -32,6 +36,15 @@ class compiler(object):
                     self.refs.append(ref)
 
     def i_fmt(self, string): # TODO: fill this in with string replacements
+        for key, value in self.options.replacements.items():
+            string = string.replace(key.lower() + "()", value)
+
+        for key, value in self.options.flags.items():
+            string = string.replace("mads." + key.lower() + "()", value)
+        
+        for not_found in self.STRINGFMT.findall(string):
+            self.options.log("warning", "'" + not_found + "()' string replacement is not defined", 1)
+
         return string
 
     def i_parse_fields(self, fields, rv, types):
@@ -201,7 +214,7 @@ class compiler(object):
                     dbg.error("support error", msg, line_num)
         
     def i_parse_required(self):
-        self.options.log("compiler", "resolving required fields", 2)
+        self.options.log("compiler", "resolving required fields", 3)
         ... # TODO: implement me!
 
     def parse(self):
@@ -217,7 +230,7 @@ class compiler(object):
                 scene = self.tokens[primary_scene][secondary_scene]
 
                 if scene["type"] == "config": # if .info configuration
-                    self.options.log("compiler", "compiling configuration", 2)
+                    self.options.log("compiler", "compiling configuration", 3)
                     primary_fields = self.i_parse_info_fields(scene["fields"])
                     for field in primary_fields:
                         self.i_parse_info_primary(field)
@@ -248,7 +261,7 @@ class compiler(object):
                                 case [*_]:
                                     dbg.error("name error", "invalid option", field["line_nums"][-1])
                 elif scene["type"] == "ref": # if reference
-                    self.options.log("compiler", "compiling reference " + scene["ref"], 3)
+                    self.options.log("compiler", "compiling reference " + scene["ref"], 4)
                     # create the secondary scene
                     self.data[primary_scene][secondary_scene] = self.i_parse_ref(primary_scene
                                                                                  ,secondary_scene
@@ -257,7 +270,7 @@ class compiler(object):
                                                                                  ,[],[]
                                                                                  ,scene["file_name"])
                 else:
-                    self.options.log("compiler", "compiling tag " + primary_scene + "." + secondary_scene, 3)
+                    self.options.log("compiler", "compiling tag " + primary_scene + "." + secondary_scene, 4)
                     defualt = {
                         self.co["output.interactions"]: {},
                         self.co["output.options"]: {},

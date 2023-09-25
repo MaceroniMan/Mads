@@ -17,7 +17,9 @@ REGEX = {
     "DIALOUGE_QUOTES": r'(?:[^\s,"]|"(?:\\.|[^"])*")+',
     "COMMENT": r'(\s*\/\/.*)*\s*$',
 
-    "PREPROCESSER": r'#\s*(?P<command>\w+)\s*(?P<argument>[\w|\.]+)?\s*({(?P<conditional>.*)})?'
+    "PREPROCESSER": r'#\s*(?P<command>\$?\w+)\s*(?P<argument>[\w|\.]+)?\s*({(?P<conditional>.*)})?',
+    
+    "STRINGFMT": r'(?P<command>[\w\.]+)\(\)'
 }
 
 REGULAR_LINE = "reg"
@@ -28,7 +30,7 @@ CONFIGURATION_NAME = "info"
 VERSION = 0.1
 PROG_NAME = "mads"
 HELP_MENU = """
-usage: mads -i INPUT -o OUTPUT [-h] [-L] [-S] [-p] [-Q] [-B] [-f {json, xml}] [-l {0, 1, 2, 3}] [-t {windows, linux}] [key:value ...] [flag=value ...]
+usage: mads -i INPUT -o OUTPUT [-h] [-L] [-S] [-p] [-Q] [-B] [-f {json, xml}] [-l {0, 1, 2, 3, 4}] [-t {windows, linux}] [key:value ...] [flag=value ...]
 
 mads, a dialouge script
 
@@ -45,7 +47,7 @@ optional arguments
   -Q, --quiet .................. suppress all output (except loading bar)
   -B, --boring ................. suppress all colors and fancy characters
   -f, --format {json, pickle} .. tell the compiler what the output format should be (default is json)
-  -l, --level {0, 1, 2, 3} ..... define the logging level (default is 1)
+  -l, --level {0, 1, 2, 3, 4} .. define the logging level (default is 1)
 
 positional arguments:
   key:value ... will add a key-value pair to the replacement map

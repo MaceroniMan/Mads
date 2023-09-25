@@ -55,22 +55,22 @@ def parseArgs(args_obj):
     if starting_file == 0:
       error("file '" + args_obj.input + "' does not exist")
     
-    options.log("status", "running preprocessor", 1)
+    options.log("status", "running preprocessor", 2)
     
     preproc = pre.preprocesser(starting_file, args_obj.input, options)
     preproc.parse()
 
-    options.log("status", "running tokenizer", 1)
+    options.log("status", "running tokenizer", 2)
 
     tokens = tokenizer.tokenizer(preproc, options)
     tokens.parse()
 
-    options.log("status", "running compiler", 1)
+    options.log("status", "running compiler", 2)
 
     compiled = compiler.compiler(tokens, options)
     compiled.parse()
 
-    options.log("status", "dumping file", 1)
+    options.log("status", "dumping file", 2)
 
     output.dump(compiled, args_obj.output, options)
   
@@ -91,7 +91,7 @@ if __name__ == "__main__":
   args_parser.add_argument("--boring", "-B", action="store_true")
 
   args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle"], default="json")
-  args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3], default=1, type=int)
+  args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3, 4], default=1, type=int)
 
   args_parser.add_argument('positionals', metavar='N', type=str, nargs='*')
 

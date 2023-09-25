@@ -99,13 +99,10 @@ class preprocesser(object):
 
                     case ("if", None, x):
                         print("if", x)
+                    case ("if", x, None):
+                        print("ifdef", x)
                     case ("if", _, _):
                         pre_error("syntax error", "invalid format for #if", line_num, self.lines, self.file_name)
-
-                    case ("ifdef", x, None):
-                        print("ifdef", x)
-                    case ("ifdef", _, _):
-                        pre_error("syntax error", "invalid format for #ifdef", line_num, self.lines, self.file_name)
 
                     case ("def", x, None):
                         print("def", x)
