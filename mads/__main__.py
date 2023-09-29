@@ -49,30 +49,33 @@ def parseArgs(args_obj):
   options.log_severity = args_obj.level
   options.end_format = args_obj.format
   options.segment = args_obj.segment
+  options.boring = args_obj.boring
+
+  log = utils.logger(options.log_severity, 60, args_obj.loader, not options.boring)
   
   if do_compile:
     starting_file = pre.parse_file(args_obj.input)
     if starting_file == 0:
       error("file '" + args_obj.input + "' does not exist")
     
-    options.log("status", "running preprocessor", 2)
+    log.log("preprocessor", "starting", 2)
     
-    preproc = pre.preprocesser(starting_file, args_obj.input, options)
+    preproc = pre.preprocesser(starting_file, args_obj.input, options, log)
     preproc.parse()
 
-    options.log("status", "running tokenizer", 2)
+    log.log("tokenizer", "starting", 2)
 
-    tokens = tokenizer.tokenizer(preproc, options)
+    tokens = tokenizer.tokenizer(preproc, options, log)
     tokens.parse()
 
-    options.log("status", "running compiler", 2)
+    log.log("compiler", "starting", 2)
 
-    compiled = compiler.compiler(tokens, options)
+    compiled = compiler.compiler(tokens, options, log)
     compiled.parse()
 
-    options.log("status", "dumping file", 2)
+    log.log("output", "compiler", 2)
 
-    output.dump(compiled, args_obj.output, options)
+    output.dump(compiled, args_obj.output, options, log)
   
 
 if __name__ == "__main__":
@@ -91,7 +94,7 @@ if __name__ == "__main__":
   args_parser.add_argument("--boring", "-B", action="store_true")
 
   args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle"], default="json")
-  args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3, 4], default=1, type=int)
+  args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3, 4], default=2, type=int)
 
   args_parser.add_argument('positionals', metavar='N', type=str, nargs='*')
 

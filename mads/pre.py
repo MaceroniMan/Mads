@@ -1,7 +1,7 @@
 from const import REGEX, REGULAR_LINE, FILENAME_LINE
 import utils as utils
 
-import re
+import re, time
 
 def pre_error(error_type, error_message, line_num, lines, file):
     prefix = "preprocesser error in file '" + file + "' on line " + str(line_num+1)
@@ -25,9 +25,10 @@ def parse_file(file_name):
     return rv
 
 class preprocesser(object):
-    def __init__(self, parsed_lines, file_name, options):
+    def __init__(self, parsed_lines, file_name, options, logger):
         self.lines = parsed_lines
         self.options = options
+        self.logger = logger
         self.file_name = file_name
         self.import_files = [file_name]
 
@@ -45,7 +46,7 @@ class preprocesser(object):
                       ,self.lines
                       ,self.file_name)
         else:
-            self.options.log("preprocessor", "new file imported '" + path + "'", 2)
+            self.logger.log("preprocessor", "new file imported '" + path + "'", 2)
             new_file_body = parse_file(path)
             if new_file_body == 0:
                 pre_error("file error", "file '" + path + "' does not exist"
@@ -69,6 +70,8 @@ class preprocesser(object):
         virtual_line_num = -1
 
         while line_num+1 < len(self.lines):
+            self.logger.bar_max = len(self.lines)
+            self.logger.next("parsing lines")
 
             line_num += 1
             virtual_line_num += 1
@@ -133,3 +136,5 @@ class preprocesser(object):
                 pass
             else:
                 self.return_lines.append((indentation, line, virtual_line_num, REGULAR_LINE))
+
+        self.logger.end()

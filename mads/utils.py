@@ -3,7 +3,13 @@ import sys
 import uuid
 import time
 
-def simple_error(error_type, error_prefix, error_message, error_body):
+try:
+  import colorama
+except:
+  pass
+
+def simple_error(error_type, error_prefix, error_message, error_body, do_colors=True):
+    print("") # make sure to exit the loading bar
 
     print(error_prefix)
     print(error_body)
@@ -53,27 +59,33 @@ def parse_string(string):
     return strings
 
 class dbg(object):
-    def __init__(self, scope_tree, scope_lines, lines, file_name):
+    # takes the logger object for colors
+    def __init__(self, logger, scope_tree, scope_lines, lines, file_name):
         self.scope_tree = scope_tree
         self.scope_lines = scope_lines
         self.lines = lines
         self.file_name = file_name
 
+        self.c = logger.c
+
     def error(self, error_type, error_text, line_obj):
+
         #prefix = "error in file '" + self.file_name + "' on line " + str(line_obj[0]+1) + " with scope:"
-        prefix = "traceback (most recent scope change last):"
+        prefix = self.c["red"] + self.c["bold"] + "traceback (most recent scope change last):" + self.c["reset"]
         
         prev_scope = "<main>"
         for scope_name, scope_line in zip(self.scope_tree, self.scope_lines):
-            prefix += "\n  file '" + self.file_name + "' line " + str(scope_line[0]+1) + " in " + prev_scope
+            prefix += "\n  file " + self.c["blue"] + "'" + self.file_name + "' line " + str(scope_line[0]+1) \
+                + self.c["reset"] + " in " + self.c["bold"] + prev_scope + self.c["reset"]
             prefix += "\n    " + self.lines[scope_line[1]][1]
             prev_scope = scope_name
         
-        body = "  file '" + self.file_name + "' line " + str(line_obj[0]+1) + " in " + prev_scope
+        body = "  file " + self.c["blue"] + "'" + self.file_name + "' line " + str(line_obj[0]+1) + self.c["reset"] \
+            + " in " + self.c["bold"] + prev_scope + self.c["reset"]
         body += "\n    " + self.lines[line_obj[1]][1]
-        body += "\n    " + "^"*len(self.lines[line_obj[1]][1])
+        body += "\n    " + self.c["red"] + "^"*len(self.lines[line_obj[1]][1]) + self.c["reset"]
 
-        simple_error(error_type, prefix, error_text, body)
+        simple_error(self.c["red"] + self.c["bold"] + error_type + self.c["reset"], prefix, error_text, body)
 
 # contains the configuration application-wide
 class options(object):
@@ -83,6 +95,7 @@ class options(object):
         self.pretty = False
         self.force = False
         self.segment = False
+        self.boring = False
         
         self.cwd = os.getcwd()
 
@@ -99,12 +112,134 @@ class options(object):
            "scene-ref": True
         }
 
+class logger(object):
+    def __init__(self, log_severity, bar_max, show_bar=True, colors=True):
+        self.bar_max = bar_max
+        self.bar_cnt = 0
+        self.show_bar = show_bar
+
+        self.log_severity = log_severity
+        self.colors = colors
+
+        self._active_bar = True
+        self._length_bar = 60
+        self._max_length_bar = 0
+        self._time_bar = None
+        self._bar_string = ""
+
+        self.c = getcolors(colors)
+        self.term = os.get_terminal_size()
+
+        # hide the cursor
+        print('\033[?25l', end="")
+    
+    def __del__(self):
+        # show the cursor
+        print('\033[?25h', end="")
+    
+    def __calc_time(self):
+        if self._time_bar == None:
+            self._time_bar = time.time()
+        remaining = ((time.time() - self._time_bar) / self.bar_cnt) * (self.bar_max - self.bar_cnt)
+        
+        mins, sec = divmod(remaining, 60)
+        time_str = f"{int(mins):02}:{sec:05.2f}"
+        return time_str
+
     # severity:
-    # 1: major milestones
-    # 2: minor milestones
-    # 3: debug messages
+    # 1: warnings
+    # 2: major milestones
+    # 3: minor milestones
+    # 4: 
     def log(self, log_type, log_text, log_severity):
-        maximum_length = len("preprocessor")
         if log_severity <= self.log_severity:
-            log_type_msg = log_type + " "*(maximum_length-len(log_type))
-            print("[ " + str(round(time.time()*1000)) + "ms ] " + log_type_msg, ":" + " "*log_severity + log_text)
+            log_type_msg = log_type
+            if self._active_bar:
+                print(" "*self.term.columns, end="\r")
+            
+            time_str = time.strftime("%m-%d %H:%M:%S")
+            
+            log_type = ""
+            if log_severity == 1:
+                log_type = self.c["yellow"] + "warning  " + self.c["reset"]
+            elif log_severity == 2:
+                log_type = self.c["green"]  + "milestone" + self.c["reset"]
+            elif log_severity == 3:
+                log_type = self.c["blue"]   + "info     " + self.c["reset"]
+            elif log_severity == 4:
+                log_type = self.c["purple"] + "debug    " + self.c["reset"]
+
+            print("[" + time_str + "] " + log_type + ": " + log_type_msg + ": " + log_text, end="\n")
+
+            # if log messages are printed after the loader is done
+            # but before end is called
+            if self.bar_cnt == self.bar_max:
+                print(self._bar_string, end="\r", flush=True)
+    
+    def next(self, msg=None):
+        self._active_bar = True
+
+        self.bar_cnt += 1
+        length = int(self._length_bar*self.bar_cnt/self.bar_max)
+        whitespace = self._length_bar-length
+
+        percent_str = str(round((self.bar_cnt/self.bar_max)*100)).rjust(3, " ") + "%"
+
+        self._bar_string = percent_str \
+            + " [" + self.c["green"] + "#"*length +  self.c["red"] + "-"*whitespace + self.c["reset"] + "] "\
+            + self.c["bold"] + self.__calc_time() + " " \
+            + str(self.bar_cnt) + "/" + str(self.bar_max) + self.c["reset"]
+
+        print(self._bar_string, end="\r", flush=True)
+    
+    def end(self):
+        self._active_bar = False
+        self.bar_cnt = 0
+        self._time_bar = None
+        self._max_length_bar = 0
+
+        print("")
+
+# returns a list of printable colors
+def getcolors(docolors=True):
+  colors = {
+    "red" : "",
+    "yellow" : "",
+    "green" : "",
+    "bold" : "",
+    "blue" : "",
+    "purple" : "",
+    "reset" : "",
+    "underline" : "",
+    "supported" : False
+  }
+
+  if not docolors:
+    return colors
+  
+  elif os.name == "nt":
+    try:
+      colors["reset"] = colorama.Style.RESET_ALL
+      colors["bold"] = colorama.Style.BRIGHT
+      colors["green"] = colorama.Fore.GREEN
+      colors["yellow"] = colorama.Fore.YELLOW
+      colors["blue"] = colorama.Fore.CYAN
+      colors["red"] = colorama.Fore.RED
+      colors["purple"] = colorama.Fore.LIGHTBLUE_EX
+      colors["underline"] = colorama.Style.UNDERLINE
+      colors["supported"] = True
+    except:
+      pass
+  else:
+    colors["reset"] = "\033[00m"
+    colors["bold"] = "\033[01m"
+    colors["green"] = "\033[32m"
+    colors["yellow"] = "\033[93m"
+    colors["blue"] = "\033[96m"
+    colors["red"] = "\033[31m"
+    colors["purple"] = "\033[35m"
+    colors["underline"] = "\033[04m"
+    colors["supported"] = True
+
+
+  return colors

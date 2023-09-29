@@ -35,10 +35,12 @@ def getFileNames(data, file_name, options):
   else:
     return [(file_name, data)]
 
-def dump(compiler_obj, file_name, options):
+def dump(compiler_obj, file_name, options, logger):
   file_content = getFileNames(compiler_obj.data, file_name, options)
   for file in file_content:
+    path = os.path.join(options.cwd, file[0])
+    logger.log("output", "output file at '" + file[0] + "'", 2)
     if options.end_format == "json":
-      dumpJson(file[1], os.path.join(options.cwd, file[0]), options)
+      dumpJson(file[1], path, options)
     elif options.end_format == "pickle":
-      dumpPickle(file[1], os.path.join(options.cwd, file[0]), options)
+      dumpPickle(file[1], path, options)

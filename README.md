@@ -1,3 +1,3 @@
-# EXDS
+# MaDS
 
-EXtensive Dialouge Script
+MaDS, a Dialouge Script

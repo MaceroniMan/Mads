@@ -1,13 +1,14 @@
 from const import COMPILEROPTIONS, VERSION, REGEX
 import utils
 
-import re
+import re, time
 
 class compiler(object):
-    def __init__(self, tokenizer, options):
+    def __init__(self, tokenizer, options, logger):
         self.tokens = tokenizer.data
         self.lines = tokenizer.lines
         self.options = options
+        self.logger = logger
         self.data = { }
         
         # track the fields for everything
@@ -24,7 +25,7 @@ class compiler(object):
         self.STRINGFMT = re.compile(REGEX["STRINGFMT"])
     
     def i_find_refs(self):
-        self.options.log("compiler", "finding references", 3)
+        self.logger.log("compiler", "finding references", 3)
         for primary_scene in self.tokens:
             for secondary_scene in self.tokens[primary_scene]:
                 if self.tokens[primary_scene][secondary_scene]["type"] == "config":
@@ -43,14 +44,14 @@ class compiler(object):
             string = string.replace("mads." + key.lower() + "()", value)
         
         for not_found in self.STRINGFMT.findall(string):
-            self.options.log("warning", "'" + not_found + "()' string replacement is not defined", 1)
+            self.logger.log("compiler", "'" + not_found + "()' string replacement is not defined", 1)
 
         return string
 
     def i_parse_fields(self, fields, rv, types):
         current_fields = {}
         for field in fields:
-            dbg = utils.dbg(field["scope_tree"], field["scope_lines"], self.lines, field["file_name"])
+            dbg = utils.dbg(self.logger, field["scope_tree"], field["scope_lines"], self.lines, field["file_name"], )
             line_num = field["line_num"]
 
             # cannot have a key the same as the dialouge or options menus
@@ -110,7 +111,7 @@ class compiler(object):
     def i_parse_ref(self, primary_scene, secondary_scene, ref, line_num, scope_tree, scope_lines, file_name):
         end_ref = ""
         full_ref = ""
-        dbg = utils.dbg(scope_tree, scope_lines, self.lines, file_name)
+        dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, file_name, )
 
         if ref.startswith("$."):
             if len(ref[2:]) == 0:
@@ -191,10 +192,11 @@ class compiler(object):
     def i_parse_info_primary(self, field):
         if field == "version":
             v = utils.try_type(field["values"][-1], float)
-            dbg = utils.dbg(field["scope_trees"][-1]
+            dbg = utils.dbg(self.logger, field["scope_trees"][-1]
                             ,field["scope_lines"][-1]
                             ,self.lines
-                            ,field["file_name"])
+                            ,field["file_name"]
+                            ,)
             if not v[0]: # failed conversion
                 dbg.error("syntax error", "parameter must be a version", field["line_nums"][-1])
             elif v[1] <= VERSION:
@@ -209,17 +211,24 @@ class compiler(object):
                 if value in self.options.support:
                     self.options.support[value] = True if condition == None else condition
                 else:
-                    dbg = utils.dbg(scope_tree, scope_lines, self.lines, field["file_name"])
+                    dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, field["file_name"], )
                     msg = "mads does not support " + value
                     dbg.error("support error", msg, line_num)
         
     def i_parse_required(self):
-        self.options.log("compiler", "resolving required fields", 3)
+        self.logger.log("compiler", "resolving required fields", 3)
         ... # TODO: implement me!
 
     def parse(self):
         self.i_find_refs()
         self.i_parse_required()
+
+        # find the number of scenes
+        cnt = 0
+        for i in self.tokens:
+            for p in self.tokens[i]:
+                cnt += 1
+        self.logger.bar_max = cnt
 
         for primary_scene in self.tokens:
             if not primary_scene in self.data:
@@ -227,10 +236,11 @@ class compiler(object):
                     self.data[primary_scene] = { } # create the primary scene
 
             for secondary_scene in self.tokens[primary_scene]:
+                self.logger.next("parsing scenes")
                 scene = self.tokens[primary_scene][secondary_scene]
 
                 if scene["type"] == "config": # if .info configuration
-                    self.options.log("compiler", "compiling configuration", 3)
+                    self.logger.log("compiler", "compiling configuration", 3)
                     primary_fields = self.i_parse_info_fields(scene["fields"])
                     for field in primary_fields:
                         self.i_parse_info_primary(field)
@@ -241,7 +251,11 @@ class compiler(object):
                         # it is a valid interaction
                         for field_name in interaction_fields:
                             field = interaction_fields[field_name]
-                            dbg = utils.dbg(field["scope_trees"][-1], field["scope_lines"][-1], self.lines, field["file_name"])
+                            dbg = utils.dbg(self.logger, field["scope_trees"][-1]
+                                            ,field["scope_lines"][-1]
+                                            ,self.lines
+                                            ,field["file_name"]
+                                            ,)
                             match [interaction,  *field["split"]]:
                                 case ["declare.scene", "field", "require"]:
                                     self.scene_require.append(field["values"][-1])
@@ -261,7 +275,7 @@ class compiler(object):
                                 case [*_]:
                                     dbg.error("name error", "invalid option", field["line_nums"][-1])
                 elif scene["type"] == "ref": # if reference
-                    self.options.log("compiler", "compiling reference " + scene["ref"], 4)
+                    self.logger.log("compiler", "compiling reference " + scene["ref"], 4)
                     # create the secondary scene
                     self.data[primary_scene][secondary_scene] = self.i_parse_ref(primary_scene
                                                                                  ,secondary_scene
@@ -270,7 +284,7 @@ class compiler(object):
                                                                                  ,[],[]
                                                                                  ,scene["file_name"])
                 else:
-                    self.options.log("compiler", "compiling tag " + primary_scene + "." + secondary_scene, 4)
+                    self.logger.log("compiler", "compiling tag " + primary_scene + "." + secondary_scene, 4)
                     defualt = {
                         self.co["output.interactions"]: {},
                         self.co["output.options"]: {},
@@ -285,3 +299,5 @@ class compiler(object):
 
                         self.data[primary_scene][secondary_scene][self.co["output.interactions"]][interaction_name] \
                             = self.i_parse_interaction(interaction_content, primary_scene, secondary_scene)
+        
+        self.logger.end()
