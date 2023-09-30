@@ -3,9 +3,14 @@ import utils as utils
 
 import re, time
 
-def pre_error(error_type, error_message, line_num, lines, file):
-    prefix = "preprocesser error in file '" + file + "' on line " + str(line_num+1)
-    utils.simple_error(error_type, prefix, error_message, "  " + lines[line_num])
+def pre_error(error_type, error_message, line_num, lines, file, logger):
+    c = logger.c
+    prefix = c["red"] + c["bold"] + "preprocesser error " + c["reset"] + "in file " \
+        + c["blue"] + "'" + file + "' on line " + str(line_num+1) + c["reset"]
+    utils.simple_error(c["red"] + c["bold"] + error_type + c["reset"]
+                       ,prefix
+                       ,error_message
+                       ,"  " + lines[line_num])
 
 def parse_file(file_name):
     rv = 0
@@ -44,7 +49,8 @@ class preprocesser(object):
             pre_error("import error", "cannot import a file that has already been imported"
                       ,line_num
                       ,self.lines
-                      ,self.file_name)
+                      ,self.file_name
+                      ,self.logger)
         else:
             self.logger.log("preprocessor", "new file imported '" + path + "'", 2)
             new_file_body = parse_file(path)
@@ -52,7 +58,8 @@ class preprocesser(object):
                 pre_error("file error", "file '" + path + "' does not exist"
                           ,line_num
                           ,self.lines
-                          ,self.file_name)
+                          ,self.file_name
+                          ,self.logger)
 
             self.import_files.append(path)
             first_name = self.file_name
@@ -118,14 +125,20 @@ class preprocesser(object):
                         pre_error("syntax error", "invalid format for #undef", line_num, self.lines, self.file_name)
                     
                     case ("import", x, None):
+                        # need -1 will increment to zero on next run
+                        # otherwise every import will bump line number
+                        # by one line down
+                        virtual_line_num = -1
                         file_line = self._import(x, line_num)
-                        virtual_line_num = 0
                         self.return_lines.append((indentation, file_line, virtual_line_num, FILENAME_LINE))
                     case ("import", _, _):
                         pre_error("syntax error", "invalid format for #import", line_num, self.lines, self.file_name)
 
                     case ("internal_change_filename", x, None):
-                        virtual_line_num = 0
+                        # need -1 will increment to zero on next run
+                        # otherwise every import will bump line number
+                        # by one line down
+                        virtual_line_num = -1
                         self.file_name = x
                         self.return_lines.append((indentation, x, virtual_line_num, FILENAME_LINE))
                     case ("internal_change_filename", _, _):

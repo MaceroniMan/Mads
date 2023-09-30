@@ -51,7 +51,7 @@ def parseArgs(args_obj):
   options.segment = args_obj.segment
   options.boring = args_obj.boring
 
-  log = utils.logger(options.log_severity, 60, args_obj.loader, not options.boring)
+  log = utils.logger(options.log_severity, 60, not options.boring)
   
   if do_compile:
     starting_file = pre.parse_file(args_obj.input)
@@ -87,7 +87,6 @@ if __name__ == "__main__":
   args_parser.add_argument('--version', action='store_true')
   args_parser.add_argument("--help", "-h", action="store_true")
 
-  args_parser.add_argument("--loader", "-L", action="store_true")
   args_parser.add_argument("--segment", "-S", action="store_true")
   args_parser.add_argument("--pretty", "-p", action="store_true")
   args_parser.add_argument("--quiet", "-Q", action="store_true")

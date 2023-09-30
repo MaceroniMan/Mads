@@ -8,7 +8,7 @@ try:
 except:
   pass
 
-def simple_error(error_type, error_prefix, error_message, error_body, do_colors=True):
+def simple_error(error_type, error_prefix, error_message, error_body):
     print("") # make sure to exit the loading bar
 
     print(error_prefix)
@@ -69,7 +69,6 @@ class dbg(object):
         self.c = logger.c
 
     def error(self, error_type, error_text, line_obj):
-
         #prefix = "error in file '" + self.file_name + "' on line " + str(line_obj[0]+1) + " with scope:"
         prefix = self.c["red"] + self.c["bold"] + "traceback (most recent scope change last):" + self.c["reset"]
         
@@ -113,10 +112,9 @@ class options(object):
         }
 
 class logger(object):
-    def __init__(self, log_severity, bar_max, show_bar=True, colors=True):
+    def __init__(self, log_severity, bar_max, colors=True):
         self.bar_max = bar_max
         self.bar_cnt = 0
-        self.show_bar = show_bar
 
         self.log_severity = log_severity
         self.colors = colors
@@ -186,7 +184,7 @@ class logger(object):
         percent_str = str(round((self.bar_cnt/self.bar_max)*100)).rjust(3, " ") + "%"
 
         self._bar_string = percent_str \
-            + " [" + self.c["green"] + "#"*length +  self.c["red"] + "-"*whitespace + self.c["reset"] + "] "\
+            + " [" + self.c["green"] + "#"*length +  self.c["red"] + "-"*whitespace + self.c["reset"] + "] " \
             + self.c["bold"] + self.__calc_time() + " " \
             + str(self.bar_cnt) + "/" + str(self.bar_max) + self.c["reset"]
 

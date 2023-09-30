@@ -57,7 +57,7 @@ class tokenizer(object):
         
         return 0
 
-    def i_make_interaction(self, npc_id, secondary_scene, name):
+    def i_make_interaction(self, npc_id, secondary_scene, name, dbg_items):
         # return values:
         # 1: name already exists
         # 0: success
@@ -65,7 +65,9 @@ class tokenizer(object):
         if name in self.data[npc_id][secondary_scene]["interactions"]:
             return 1
         else:
-            self.data[npc_id][secondary_scene]["interactions"][name] = {"dialouge": [], "options": [], "fields" : []}
+            new_interaction = dbg_items | {"dialouge": [], "options": [], "fields" : []}
+
+            self.data[npc_id][secondary_scene]["interactions"][name] = new_interaction
         
         return 0
 
@@ -135,7 +137,11 @@ class tokenizer(object):
                 rv = self.i_make_tag(primary_scene, secondary_scene, {
                     "type" : "ref",
                     "ref": m_ref,
-                    "line_num" : self.line_num
+
+                    "line_num": self.line_num,
+                    "scope_lines": self.scope_lines.copy(),
+                    "scope_tree": self.scope_tree.copy(),
+                    "file_name": self.file_name
                 })
                 if rv == 1:
                     utils.error("syntax error", "scene already exists", self.line_num, dbg)
@@ -147,7 +153,12 @@ class tokenizer(object):
                 rv = self.i_make_tag(primary_scene, secondary_scene, {
                     "type" : "config" if self.do_config else "scene",
                     "interactions" : {},
-                    "fields" : []
+                    "fields" : [],
+
+                    "line_num": self.line_num,
+                    "scope_lines": self.scope_lines.copy(),
+                    "scope_tree": self.scope_tree.copy(),
+                    "file_name": self.file_name
                 })
                 if rv == 1:
                     dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
@@ -175,7 +186,12 @@ class tokenizer(object):
                     dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                     dbg.error("name error", m_id + " is not allowed here", self.line_num)
 
-            rv = self.i_make_interaction(self.scene[0], self.scene[1], m_id)
+            rv = self.i_make_interaction(self.scene[0], self.scene[1], m_id, {
+                "line_num": self.line_num,
+                "scope_lines": self.scope_lines.copy(),
+                "scope_tree": self.scope_tree.copy(),
+                "file_name": self.file_name
+            })
             if rv == 1:
                 dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                 dbg.error("syntax error", "dialouge already exists", self.line_num)
@@ -233,7 +249,13 @@ class tokenizer(object):
             if m_id == None:
                 m_id = utils.make_uuid()
 
-            rv = self.i_make_interaction(self.scene[0], self.scene[1], m_id)
+            rv = self.i_make_interaction(self.scene[0], self.scene[1], m_id, {
+                "line_num": self.line_num,
+                "scope_lines": self.scope_lines.copy(),
+                "scope_tree": self.scope_tree.copy(),
+                "file_name": self.file_name
+            })
+
             if rv == 1:
                 dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                 dbg.error("syntax error", "interaction already exists", self.line_num)

@@ -1,7 +1,7 @@
 from const import COMPILEROPTIONS, VERSION, REGEX
 import utils
 
-import re, time
+import re
 
 class compiler(object):
     def __init__(self, tokenizer, options, logger):
@@ -51,7 +51,7 @@ class compiler(object):
     def i_parse_fields(self, fields, rv, types):
         current_fields = {}
         for field in fields:
-            dbg = utils.dbg(self.logger, field["scope_tree"], field["scope_lines"], self.lines, field["file_name"], )
+            dbg = utils.dbg(self.logger, field["scope_tree"], field["scope_lines"], self.lines, field["file_name"])
             line_num = field["line_num"]
 
             # cannot have a key the same as the dialouge or options menus
@@ -111,7 +111,7 @@ class compiler(object):
     def i_parse_ref(self, primary_scene, secondary_scene, ref, line_num, scope_tree, scope_lines, file_name):
         end_ref = ""
         full_ref = ""
-        dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, file_name, )
+        dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, file_name)
 
         if ref.startswith("$."):
             if len(ref[2:]) == 0:
@@ -195,8 +195,7 @@ class compiler(object):
             dbg = utils.dbg(self.logger, field["scope_trees"][-1]
                             ,field["scope_lines"][-1]
                             ,self.lines
-                            ,field["file_name"]
-                            ,)
+                            ,field["file_name"])
             if not v[0]: # failed conversion
                 dbg.error("syntax error", "parameter must be a version", field["line_nums"][-1])
             elif v[1] <= VERSION:
@@ -211,17 +210,37 @@ class compiler(object):
                 if value in self.options.support:
                     self.options.support[value] = True if condition == None else condition
                 else:
-                    dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, field["file_name"], )
+                    dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, field["file_name"])
                     msg = "mads does not support " + value
                     dbg.error("support error", msg, line_num)
-        
+    
+    # function uses 'tag' as it is for both interactions
+    # and scenes
+    def i_check_required(self, tag_obj, required, tag_type):
+        fields = [i["id"] for i in tag_obj["fields"]]
+        for required_field in required:
+            if not required_field in fields:
+                dbg = utils.dbg(self.logger
+                                ,tag_obj["scope_tree"]
+                                ,tag_obj["scope_lines"]
+                                ,self.lines
+                                ,tag_obj["file_name"])
+                dbg.error("requirement error", "field '" + required_field + "' does not exist in " + tag_type
+                            ,tag_obj["line_num"])
+
     def i_parse_required(self):
         self.logger.log("compiler", "resolving required fields", 3)
-        ... # TODO: implement me!
+        for primary_scene in self.tokens:
+            for secondary_scene in self.tokens[primary_scene]:
+                scene = self.tokens[primary_scene][secondary_scene]
+                if scene["type"] == "scene":
+                    self.i_check_required(scene, self.scene_require, "scene")
+                    for interaction_name in scene["interactions"]:
+                        interaction = scene["interactions"][interaction_name]
+                        self.i_check_required(interaction, self.interaction_require, "interaction")
 
     def parse(self):
         self.i_find_refs()
-        self.i_parse_required()
 
         # find the number of scenes
         cnt = 0
@@ -254,8 +273,8 @@ class compiler(object):
                             dbg = utils.dbg(self.logger, field["scope_trees"][-1]
                                             ,field["scope_lines"][-1]
                                             ,self.lines
-                                            ,field["file_name"]
-                                            ,)
+                                            ,field["file_name"])
+                                            
                             match [interaction,  *field["split"]]:
                                 case ["declare.scene", "field", "require"]:
                                     self.scene_require.append(field["values"][-1])
@@ -301,3 +320,4 @@ class compiler(object):
                             = self.i_parse_interaction(interaction_content, primary_scene, secondary_scene)
         
         self.logger.end()
+        self.i_parse_required()
