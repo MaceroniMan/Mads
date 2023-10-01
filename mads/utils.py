@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 import time
+import difflib
 
 try:
   import colorama
@@ -58,6 +59,17 @@ def parse_string(string):
     
     return strings
 
+def did_you_mean(term, other_terms):
+    if isinstance(other_terms, dict):
+        close_term = difflib.get_close_matches(term, other_terms.keys())
+    else:
+        close_term = difflib.get_close_matches(term, other_terms)
+
+    if len(close_term) == 0:
+        return ""
+    else:
+        return ", did you mean '" + close_term[0] + "'?"
+
 class dbg(object):
     # takes the logger object for colors
     def __init__(self, logger, scope_tree, scope_lines, lines, file_name):
@@ -67,6 +79,14 @@ class dbg(object):
         self.file_name = file_name
 
         self.c = logger.c
+        self.term = logger.term
+    
+    def __truncate_line(self, line):
+        if len(line) > self.term.columns:
+            line = line[:self.term.columns-3]
+            return line + self.c["blue"] + "..." + self.c["reset"], len(line)
+        else:
+            return line, len(line)
 
     def error(self, error_type, error_text, line_obj):
         #prefix = "error in file '" + self.file_name + "' on line " + str(line_obj[0]+1) + " with scope:"
@@ -76,13 +96,15 @@ class dbg(object):
         for scope_name, scope_line in zip(self.scope_tree, self.scope_lines):
             prefix += "\n  file " + self.c["blue"] + "'" + self.file_name + "' line " + str(scope_line[0]+1) \
                 + self.c["reset"] + " in " + self.c["bold"] + prev_scope + self.c["reset"]
-            prefix += "\n    " + self.lines[scope_line[1]][1]
+            line, _ = self.__truncate_line("\n    " + self.lines[scope_line[1]][1])
+            prefix += line
             prev_scope = scope_name
         
         body = "  file " + self.c["blue"] + "'" + self.file_name + "' line " + str(line_obj[0]+1) + self.c["reset"] \
             + " in " + self.c["bold"] + prev_scope + self.c["reset"]
-        body += "\n    " + self.lines[line_obj[1]][1]
-        body += "\n    " + self.c["red"] + "^"*len(self.lines[line_obj[1]][1]) + self.c["reset"]
+        line, line_length = self.__truncate_line("\n    " + self.lines[line_obj[1]][1])
+        body += line
+        body += "\n    " + self.c["red"] + "^"*(line_length-5) + self.c["reset"]
 
         simple_error(self.c["red"] + self.c["bold"] + error_type + self.c["reset"], prefix, error_text, body)
 

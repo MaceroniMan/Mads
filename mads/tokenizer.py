@@ -330,6 +330,7 @@ class tokenizer(object):
             self.line_num = (line_obj[2], total_line_num)
 
             if line_obj[3] == FILENAME_LINE:
+                self.logger.log("tokenizer", "switching file to '" + line + "'", 3)
                 self.file_name = line
             else:
                 if self.next_indent:

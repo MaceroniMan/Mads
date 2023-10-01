@@ -41,7 +41,6 @@ required arguments:
 optional arguments
   -h, --help ................... show this help menu and exit
   -v, --version ................ show version information and exit
-  -L, --loader ................. tell mads to create a loading bar
   -S, --segment ................ split up the output files by primary scene
   -p, --pretty ................. pretty-print the output json or xml file
   -Q, --quiet .................. suppress all output (except loading bar)

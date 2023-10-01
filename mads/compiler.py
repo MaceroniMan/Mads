@@ -2,6 +2,7 @@ from const import COMPILEROPTIONS, VERSION, REGEX
 import utils
 
 import re
+import difflib
 
 class compiler(object):
     def __init__(self, tokenizer, options, logger):
@@ -173,9 +174,9 @@ class compiler(object):
         for field in fields:
             if field["id"] in rv:
                 rv[field["id"]]["scope_lines"].append(field["scope_lines"])
-                rv[field["id"]]["scope_tree"].append(field["scope_tree"])
-                rv[field["id"]]["line_num"].append(field["line_num"])
-                rv[field["id"]]["values"].append(field["line_num"])
+                rv[field["id"]]["scope_trees"].append(field["scope_tree"])
+                rv[field["id"]]["line_nums"].append(field["line_num"])
+                rv[field["id"]]["values"].append(field["value"])
                 rv[field["id"]]["conditionals"].append(field["conditional"])
             else:
                 rv[field["id"]] = {
@@ -189,8 +190,8 @@ class compiler(object):
                 }
         return rv
 
-    def i_parse_info_primary(self, field):
-        if field == "version":
+    def i_parse_info_primary(self, field_name, field):
+        if field_name == "version":
             v = utils.try_type(field["values"][-1], float)
             dbg = utils.dbg(self.logger, field["scope_trees"][-1]
                             ,field["scope_lines"][-1]
@@ -198,10 +199,10 @@ class compiler(object):
                             ,field["file_name"])
             if not v[0]: # failed conversion
                 dbg.error("syntax error", "parameter must be a version", field["line_nums"][-1])
-            elif v[1] <= VERSION:
+            elif v[1] > VERSION:
                 msg = "mads does not support version " + str(v[1])
                 dbg.error("version error", msg, field["line_nums"][-1])
-        elif field == "support":
+        elif field_name == "support":
             for value, condition, line_num, scope_tree, scope_lines in zip(field["values"]
                                                                            ,field["conditionals"]
                                                                            ,field["line_nums"]
@@ -262,7 +263,7 @@ class compiler(object):
                     self.logger.log("compiler", "compiling configuration", 3)
                     primary_fields = self.i_parse_info_fields(scene["fields"])
                     for field in primary_fields:
-                        self.i_parse_info_primary(field)
+                        self.i_parse_info_primary(field, primary_fields[field])
 
                     for interaction in scene["interactions"]:
                         interaction_fields = self.i_parse_info_fields(scene["interactions"][interaction]["fields"])
@@ -290,7 +291,9 @@ class compiler(object):
                                     if field_name in self.co:
                                         self.co[field_name] = field["values"][-1]
                                     else:
-                                        dbg.error("name error", "compiler option does not exist", field["line_nums"][-1])
+                                        error_msg = "compiler option does not exist" \
+                                            + utils.did_you_mean(field_name, self.co)
+                                        dbg.error("name error", error_msg, field["line_nums"][-1])
                                 case [*_]:
                                     dbg.error("name error", "invalid option", field["line_nums"][-1])
                 elif scene["type"] == "ref": # if reference
