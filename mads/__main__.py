@@ -79,6 +79,9 @@ def parseArgs(args_obj):
   
 
 if __name__ == "__main__":
+  if sys.version_info < (3, 10):
+    error("mads needs at least Python 3.10 or higher")
+
   args_parser = argparse.ArgumentParser(PROG_NAME, "usage of mads", add_help=False)
 
   args_parser.add_argument("--input", "-i", action="store")
