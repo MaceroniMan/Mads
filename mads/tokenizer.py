@@ -31,7 +31,6 @@ class tokenizer(object):
         self.DIALOUGE = re.compile(REGEX["DIALOUGE"]+REGEX["COMMENT"])
         self.OPTION = re.compile(REGEX["OPTION"]+REGEX["COMMENT"])
         self.ADHOC = re.compile(REGEX["ADHOC"]+REGEX["COMMENT"])
-        self.DIALOUGE_QUOTES = re.compile(REGEX["DIALOUGE_QUOTES"]+REGEX["COMMENT"])
         self.PREPROCESSER = re.compile(REGEX["PREPROCESSER"]+REGEX["COMMENT"])
     
     def i_make_tag(self, npc_id, secondary_scene, value):
@@ -182,9 +181,12 @@ class tokenizer(object):
                 self.indentation_tree = [self.indentation_tree[0]]
             
             if self.do_config:
-                if not m_id in ["declare.scene", "declare.interaction", "compiler"]:
+                valid_interactions = ["declare.scene", "declare.interaction", "compiler"]
+                if not m_id in valid_interactions:
                     dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
-                    dbg.error("name error", m_id + " is not allowed here", self.line_num)
+                    did_you_mean_text = utils.did_you_mean(m_id, valid_interactions)
+                    dbg.error("name error", "the interaction '" + m_id + "' is not allowed here" \
+                        + did_you_mean_text, self.line_num)
 
             rv = self.i_make_interaction(self.scene[0], self.scene[1], m_id, {
                 "line_num": self.line_num,
@@ -210,7 +212,7 @@ class tokenizer(object):
     def _field(self, match, indentation):
         m_id = match.group("id")
         m_ref = match.group("value")
-        m_condid = match.group("conditional")
+        m_condid = utils.try_strip(match.group("conditional"))
 
         current_indent = self.i_check_indent(indentation)
 
@@ -241,7 +243,7 @@ class tokenizer(object):
     def _adhoc(self, match, indentation):
         m_text = match.group("text")
         m_id = match.group("id")
-        m_condid = match.group("conditional")
+        m_condid = utils.try_strip(match.group("conditional"))
 
         current_indent = self.i_check_indent(indentation)
 
@@ -281,7 +283,7 @@ class tokenizer(object):
     def _option(self, match, indentation):
         m_text = match.group("text")
         m_ref = match.group("ref")
-        m_condid = match.group("conditional")
+        m_condid = utils.try_strip(match.group("conditional"))
 
         current_indent = self.i_check_indent(indentation)
 
@@ -299,7 +301,7 @@ class tokenizer(object):
 
         else:
             dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
-            dbg.error("syntax error", "invalid location for a adhoc option", self.line_num)
+            dbg.error("syntax error", "invalid location for a option", self.line_num)
 
     def _dialouge(self, match, indentation):
         m_text = match.group("text")

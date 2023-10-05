@@ -21,6 +21,12 @@ def simple_error(error_type, error_prefix, error_message, error_body):
 def make_uuid():
     return str(uuid.uuid4())
 
+def try_strip(obj):
+    try:
+        return obj.strip()
+    except:
+        return obj
+
 def try_type(obj, typ):
     try:
         return (True, typ(obj))

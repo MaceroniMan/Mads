@@ -21,7 +21,8 @@ class compiler(object):
 
         self.co = COMPILEROPTIONS.copy()
 
-        self.refs = []
+        self.interaction_refs = []
+        self.scene_refs = []
 
         self.STRINGFMT = re.compile(REGEX["STRINGFMT"])
     
@@ -29,13 +30,17 @@ class compiler(object):
         self.logger.log("compiler", "finding references", 3)
         for primary_scene in self.tokens:
             for secondary_scene in self.tokens[primary_scene]:
+                self.scene_refs.append(primary_scene + "." + secondary_scene)
+
                 if self.tokens[primary_scene][secondary_scene]["type"] == "config":
                     continue # do not add the .info refs 
+                if self.tokens[primary_scene][secondary_scene]["type"] == "ref":
+                    continue
                 for interaction_name in self.tokens[primary_scene][secondary_scene]["interactions"]:
                     ref = primary_scene + "." + secondary_scene + "." + interaction_name
                     # do not need to check if the ref already exists
                     # as that is checked in the tokenizer
-                    self.refs.append(ref)
+                    self.interaction_refs.append(ref)
 
     def i_fmt(self, string): # TODO: fill this in with string replacements
         for key, value in self.options.replacements.items():
@@ -137,7 +142,7 @@ class compiler(object):
             else:
                 dbg.error("reference error", "mads file does not support full-ref", line_num)
 
-        if full_ref in self.refs:
+        if full_ref in self.interaction_refs:
             return end_ref
         else:
             dbg.error("reference error", "reference does not exist", line_num)
@@ -209,13 +214,16 @@ class compiler(object):
                                                                            ,field["scope_trees"]
                                                                            ,field["scope_lines"]):
                 if value in self.options.support:
-                    self.options.support[value] = True if condition == None else condition
+                    if condition == "false":
+                        self.options.support[value] = False
+                    else:
+                        self.options.support[value] = True
                 else:
                     dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, field["file_name"])
                     msg = "mads does not support " + value
                     dbg.error("support error", msg, line_num)
     
-    # function uses 'tag' as it is for both interactions
+    # this function uses 'tag' as it is for both interactions
     # and scenes
     def i_check_required(self, tag_obj, required, tag_type):
         fields = [i["id"] for i in tag_obj["fields"]]
@@ -244,22 +252,13 @@ class compiler(object):
         self.i_find_refs()
 
         # find the number of scenes
+        # and compile info
         cnt = 0
         for i in self.tokens:
             for p in self.tokens[i]:
                 cnt += 1
-        self.logger.bar_max = cnt
-
-        for primary_scene in self.tokens:
-            if not primary_scene in self.data:
-                if primary_scene != "":
-                    self.data[primary_scene] = { } # create the primary scene
-
-            for secondary_scene in self.tokens[primary_scene]:
-                self.logger.next("parsing scenes")
-                scene = self.tokens[primary_scene][secondary_scene]
-
-                if scene["type"] == "config": # if .info configuration
+                if self.tokens[i][p]["type"] == "config":
+                    scene = self.tokens[i][p]
                     self.logger.log("compiler", "compiling configuration", 3)
                     primary_fields = self.i_parse_info_fields(scene["fields"])
                     for field in primary_fields:
@@ -276,7 +275,7 @@ class compiler(object):
                                             ,self.lines
                                             ,field["file_name"])
                                             
-                            match [interaction,  *field["split"]]:
+                            match [interaction, *field["split"]]:
                                 case ["declare.scene", "field", "require"]:
                                     self.scene_require.append(field["values"][-1])
                                 case ["declare.interaction", "field", "require"]:
@@ -296,15 +295,42 @@ class compiler(object):
                                         dbg.error("name error", error_msg, field["line_nums"][-1])
                                 case [*_]:
                                     dbg.error("name error", "invalid option", field["line_nums"][-1])
+        self.logger.bar_max = cnt
+
+        for primary_scene in self.tokens:
+            if not primary_scene in self.data:
+                if primary_scene != "":
+                    self.data[primary_scene] = { } # create the primary scene
+
+            for secondary_scene in self.tokens[primary_scene]:
+                self.logger.next("parsing scenes")
+                scene = self.tokens[primary_scene][secondary_scene]
+
+                if scene["type"] == "config": # if .info configuration
+                    continue
                 elif scene["type"] == "ref": # if reference
                     self.logger.log("compiler", "compiling reference " + scene["ref"], 4)
-                    # create the secondary scene
-                    self.data[primary_scene][secondary_scene] = self.i_parse_ref(primary_scene
-                                                                                 ,secondary_scene
-                                                                                 ,scene["ref"]
-                                                                                 ,scene["line_num"]
-                                                                                 ,[],[]
-                                                                                 ,scene["file_name"])
+                    dbg = utils.dbg(self.logger
+                                ,scene["scope_tree"]
+                                ,scene["scope_lines"]
+                                ,self.lines
+                                ,scene["file_name"])
+                    
+                    print(scene)
+                    if not self.options.support["scene-ref"]:
+                        dbg.error("support error", "this mads script does not support scene-ref", scene["line_num"])
+                    if scene["ref"] in self.scene_refs:
+                        if self.options.support["full-ref"]:
+                            self.data[primary_scene][secondary_scene] = scene["ref"]
+                        else:
+                            if scene["ref"].startswith(primary_scene):
+                                scene_str = scene["ref"].replace(primary_scene + ".", "")
+                                self.data[primary_scene][secondary_scene] = scene_str
+                            else:
+                                dbg.error("reference error", "reference must be part of current primary scene"
+                                          , scene["line_num"])
+                    else:
+                        dbg.error("reference error", "scene '" + scene["ref"] + "' does not exist", scene["line_num"])
                 else:
                     self.logger.log("compiler", "compiling tag " + primary_scene + "." + secondary_scene, 4)
                     defualt = {

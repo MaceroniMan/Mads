@@ -83,7 +83,11 @@ class preprocesser(object):
             line_num += 1
             virtual_line_num += 1
 
+            debug_object = (line_num, self.lines, self.file_name, self.logger)
+
             line = self.lines[line_num]
+            if "\t" in line: # fail if using tabs
+                pre_error("syntax error", "mads does not support tabs", *debug_object)
             indentation = len(line)-len(line.lstrip())
 
             line = line.lstrip()
@@ -105,24 +109,24 @@ class preprocesser(object):
                     case ("endif", None, None):
                         print("endif")
                     case ("endif", _, _):
-                        pre_error("syntax error", "invalid format for #endif", line_num, self.lines, self.file_name)
+                        pre_error("syntax error", "invalid format for #endif", *debug_object)
 
                     case ("if", None, x):
                         print("if", x)
                     case ("if", x, None):
                         print("ifdef", x)
                     case ("if", _, _):
-                        pre_error("syntax error", "invalid format for #if", line_num, self.lines, self.file_name)
+                        pre_error("syntax error", "invalid format for #if", *debug_object)
 
                     case ("def", x, None):
                         print("def", x)
                     case ("def", _, _):
-                        pre_error("syntax error", "invalid format for #def", line_num, self.lines, self.file_name)
+                        pre_error("syntax error", "invalid format for #def", *debug_object)
 
                     case ("undef", x, None):
                         print("undef", x)
                     case ("undef", _, _):
-                        pre_error("syntax error", "invalid format for #undef", line_num, self.lines, self.file_name)
+                        pre_error("syntax error", "invalid format for #undef", *debug_object)
                     
                     case ("import", x, None):
                         # need -1 will increment to zero on next run
@@ -132,7 +136,7 @@ class preprocesser(object):
                         file_line = self._import(x, line_num)
                         self.return_lines.append((indentation, file_line, virtual_line_num, FILENAME_LINE))
                     case ("import", _, _):
-                        pre_error("syntax error", "invalid format for #import", line_num, self.lines, self.file_name)
+                        pre_error("syntax error", "invalid format for #import", *debug_object)
 
                     case ("internal_change_filename", x, None):
                         # need -1 will increment to zero on next run
@@ -142,10 +146,10 @@ class preprocesser(object):
                         self.file_name = x
                         self.return_lines.append((indentation, x, virtual_line_num, FILENAME_LINE))
                     case ("internal_change_filename", _, _):
-                        pre_error("syntax error", "invalid internal command", line_num, self.lines, self.file_name)
+                        pre_error("syntax error", "invalid internal command", *debug_object)
                     
                     case (_, _, _):
-                        pre_error("syntax error", "invalid pound command", line_num, self.lines, self.file_name)
+                        pre_error("syntax error", "invalid pound command", *debug_object)
                 pass
             else:
                 self.return_lines.append((indentation, line, virtual_line_num, REGULAR_LINE))
