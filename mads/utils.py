@@ -136,7 +136,8 @@ class options(object):
 
         self.support = {
            "full-ref": False,
-           "scene-ref": True
+           "scene-ref": True,
+           "shortcut-ref" : True
         }
 
 class logger(object):

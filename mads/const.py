@@ -4,7 +4,9 @@ COMPILEROPTIONS = { # compiler options
     "output.options": "options",
 
     "output.options.ref": "ref",
-    "output.options.text": "text"
+    "output.options.text": "text",
+
+    "output.exit": "exit",
 }
 
 REGEX = {

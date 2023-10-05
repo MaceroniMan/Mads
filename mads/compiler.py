@@ -139,6 +139,12 @@ class compiler(object):
                     full_ref = ref
                 else:
                     dbg.error("reference error", "invalid full reference format", line_num)
+            # shortcut methods bypass all error checking
+            elif ref.startswith("mads.") and len(ref.split(".")) == 2:
+                if ref == "mads.exit":
+                    return self.co["output.exit"]
+                else:
+                    dbg.error("reference error", ref + " is not a valid shortcut", line_num)
             else:
                 dbg.error("reference error", "mads file does not support full-ref", line_num)
 
