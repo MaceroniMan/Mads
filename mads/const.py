@@ -30,7 +30,7 @@ FILENAME_LINE = "file"
 
 CONFIGURATION_NAME = "info"
 
-VERSION = 0.2
+VERSION = 0.3
 PROG_NAME = "mads"
 HELP_MENU = """
 usage: mads -i INPUT -o OUTPUT [-h] [-L] [-S] [-p] [-Q] [-B] [-f {json, xml}] [-l {0, 1, 2, 3, 4}] [-t {windows, linux}] [key:value ...] [flag=value ...]
