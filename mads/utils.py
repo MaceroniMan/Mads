@@ -148,14 +148,14 @@ class logger(object):
         self.log_severity = log_severity
         self.colors = colors
 
+        self.c = getcolors(colors)
+        self.term = os.get_terminal_size()
+
         self._active_bar = True
-        self._length_bar = 60
+        self._length_bar = min(self.term.columns-25, 60)
         self._max_length_bar = 0
         self._time_bar = None
         self._bar_string = ""
-
-        self.c = getcolors(colors)
-        self.term = os.get_terminal_size()
 
         # hide the cursor
         print('\033[?25l', end="")

@@ -19,6 +19,8 @@ def parse_file(file_name):
         rv = file.read().split("\n")
     except FileNotFoundError:
         rv = 0
+    except IsADirectoryError:
+        rv = -1
 
     if not rv:
         try:
@@ -26,6 +28,8 @@ def parse_file(file_name):
             rv = file.read().split("\n")
         except FileNotFoundError:
             rv = 0
+        except IsADirectoryError:
+            rv = -1
     
     return rv
 
@@ -56,6 +60,12 @@ class preprocesser(object):
             new_file_body = parse_file(path)
             if new_file_body == 0:
                 pre_error("file error", "file '" + path + "' does not exist"
+                          ,line_num
+                          ,self.lines
+                          ,self.file_name
+                          ,self.logger)
+            if new_file_body == -1:
+                pre_error("file error", "path '" + path + "' is a directory"
                           ,line_num
                           ,self.lines
                           ,self.file_name

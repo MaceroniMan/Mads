@@ -106,7 +106,7 @@ class tokenizer(object):
             if len(non_blank_items) >= 2:
                 return non_blank_items[0], ".".join(non_blank_items[1:])
             else:
-                dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines)
+                dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                 dbg.error("syntax error", "invalid scene definition", self.line_num)
     
     def _tag(self, match, indentation):

@@ -151,7 +151,7 @@ class compiler(object):
         if full_ref in self.interaction_refs:
             return end_ref
         else:
-            dbg.error("reference error", "reference does not exist", line_num)
+            dbg.error("reference error", "reference '" + full_ref + "' does not exist", line_num)
     
     def i_parse_interaction(self, interaction, primary_scene, secondary_scene):
         current_interactions = self.i_parse_fields(interaction["fields"], {}, self.interaction_types_fields)

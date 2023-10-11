@@ -57,6 +57,8 @@ def parseArgs(args_obj):
     starting_file = pre.parse_file(args_obj.input)
     if starting_file == 0:
       error("file '" + args_obj.input + "' does not exist")
+    if starting_file == -1:
+      error("path '" + args_obj.input + "' is a directory")
     
     log.log("preprocessor", "starting", 2)
     
