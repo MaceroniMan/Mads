@@ -15,7 +15,7 @@ REGEX = {
     "FIELD_UNQUOTE": r'\*\s*(?P<id>(\w|\.|-)+):\s*(?P<value>(\w|\.|-|\$)+)(\s*{\s*(?P<conditional>.*)\s*})?',
     "FIELD_QUOTE": r'\*\s*(?P<id>(\w|\.|-)+):\s*("(?P<value>.*)")(\s*{\s*(?P<conditional>.*)\s*})?',
     "DIALOUGE": r'\?\s*(?P<text>".*")',
-    "OPTION": r'>\s*"(?P<text>.*)"\s*(?P<ref>(\$\.|\.|\w)+)(\s*{\s*(?P<conditional>.*)\s*})?',
+    "OPTION": r'>\s*"(?P<text>.*)"\s*(?P<ref>(\$\.|\.|-|\w)+)(\s*{\s*(?P<conditional>.*)\s*})?',
     "ADHOC": r':\s*"(?P<text>.*)"\s*(\[(?P<id>(\w|-|\.)+)\])?(\s*{\s*(?P<conditional>.*)\s*})?',
 
     "DIALOUGE_QUOTES": r'(?:[^\s,"]|"(?:\\.|[^"])*")+',
