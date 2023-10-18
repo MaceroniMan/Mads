@@ -10,14 +10,14 @@ class compiler(object):
         self.lines = tokenizer.lines
         self.options = options
         self.logger = logger
-        self.data = { }
+        self.data = {}
         
         # track the fields for everything
-        self.scene_types_fields = { }
-        self.interaction_types_fields = { }
+        self.scene_types_fields = {}
+        self.interaction_types_fields = {}
 
-        self.scene_require = [ ]
-        self.interaction_require = [ ]
+        self.scene_require = []
+        self.interaction_require = []
 
         self.co = COMPILEROPTIONS.copy()
 
@@ -160,8 +160,9 @@ class compiler(object):
         current_interactions[self.co["output.dialouge"]] = []
 
         for option in interaction["options"]:
+            condt = option["conditional"] if option["conditional"] != None else self.co["output.noconditional"]
             current_interactions[self.co["output.options"]].append([
-                option["conditional"],
+                condt,
                 {
                     self.co["output.options.ref"]: self.i_parse_ref(primary_scene, secondary_scene,
                                                                     option["ref"],
@@ -234,14 +235,14 @@ class compiler(object):
     def i_check_required(self, tag_obj, required, tag_type):
         fields = [i["id"] for i in tag_obj["fields"]]
         for required_field in required:
-            if not required_field in fields:
+            if required_field not in fields:
                 dbg = utils.dbg(self.logger
                                 ,tag_obj["scope_tree"]
                                 ,tag_obj["scope_lines"]
                                 ,self.lines
                                 ,tag_obj["file_name"])
                 dbg.error("requirement error", "field '" + required_field + "' does not exist in " + tag_type
-                            ,tag_obj["line_num"])
+                          ,tag_obj["line_num"])
 
     def i_parse_required(self):
         self.logger.log("compiler", "resolving required fields", 3)
@@ -288,7 +289,7 @@ class compiler(object):
                                     self.interaction_require.append(field["values"][-1])
                                 case [_, "field", "require"]:
                                     dbg.error("name error", "incorrect location for require", field["line_nums"][-1])
-                                case ["declare.scene"|"declare.interaction", "field", "types", x]:
+                                case ["declare.scene" | "declare.interaction", "field", "types", x]:
                                     self.scene_types_fields[x] = field["values"][-1]
                                 case [_, "field", "types", _]:
                                     dbg.error("name error", "incorrect location for type definition", field["line_nums"][-1])
@@ -304,7 +305,7 @@ class compiler(object):
         self.logger.bar_max = cnt
 
         for primary_scene in self.tokens:
-            if not primary_scene in self.data:
+            if primary_scene not in self.data:
                 if primary_scene != "":
                     self.data[primary_scene] = { } # create the primary scene
 

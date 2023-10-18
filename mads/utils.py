@@ -3,6 +3,7 @@ import sys
 import uuid
 import time
 import difflib
+import datetime
 
 try:
   import colorama
@@ -137,7 +138,7 @@ class options(object):
         self.support = {
            "full-ref": False,
            "scene-ref": True,
-           "shortcut-ref" : True
+           "shortcut-ref": True
         }
 
 class logger(object):
@@ -184,7 +185,7 @@ class logger(object):
             if self._active_bar:
                 print(" "*self.term.columns, end="\r")
             
-            time_str = time.strftime("%m-%d %H:%M:%S")
+            time_str = datetime.datetime.now().strftime("%m/%d %H:%M:%S.%f")[:-3]
             
             log_type = ""
             if log_severity == 1:
@@ -230,15 +231,15 @@ class logger(object):
 # returns a list of printable colors
 def getcolors(docolors=True):
   colors = {
-    "red" : "",
-    "yellow" : "",
-    "green" : "",
-    "bold" : "",
-    "blue" : "",
-    "purple" : "",
-    "reset" : "",
-    "underline" : "",
-    "supported" : False
+    "red": "",
+    "yellow": "",
+    "green": "",
+    "bold": "",
+    "blue": "",
+    "purple": "",
+    "reset": "",
+    "underline": "",
+    "supported": False
   }
 
   if not docolors:
@@ -267,6 +268,5 @@ def getcolors(docolors=True):
     colors["purple"] = "\033[35m"
     colors["underline"] = "\033[04m"
     colors["supported"] = True
-
 
   return colors
