@@ -7,6 +7,7 @@ COMPILEROPTIONS = { # compiler options
     "output.options.text": "text",
 
     "output.exit": "exit",
+    "output.noconditional": "true"
 }
 
 REGEX = {
@@ -16,12 +17,12 @@ REGEX = {
     "DIALOUGE": r'\?\s*(?P<text>".*")',
     "OPTION": r'>\s*"(?P<text>.*)"\s*(?P<ref>(\$\.|\.|-|\w)+)(\s*{\s*(?P<conditional>.*)\s*})?',
     "ADHOC": r':\s*"(?P<text>.*)"\s*(\[(?P<id>(\w|-|\.)+)\])?(\s*{\s*(?P<conditional>.*)\s*})?',
-    
+
     "DIALOUGE_QUOTES": r'(?:[^\s,"]|"(?:\\.|[^"])*")+',
     "COMMENT": r'(\s*\/\/.*)*\s*$',
 
     "PREPROCESSER": r'#\s*(?P<command>\$?\w+)\s*(?P<argument>[\w|\.|\\|/]+)?\s*({(?P<conditional>.*)})?',
-    
+
     "STRINGFMT": r'(?P<command>[\w\.]+)\(\)'
 }
 
@@ -30,7 +31,7 @@ FILENAME_LINE = "file"
 
 CONFIGURATION_NAME = "info"
 
-VERSION = 0.3
+VERSION = 0.4
 PROG_NAME = "mads"
 HELP_MENU = """
 usage: mads -i INPUT -o OUTPUT [-h] [-L] [-S] [-p] [-Q] [-B] [-f {json, xml}] [-l {0, 1, 2, 3, 4}] [-t {windows, linux}] [key:value ...] [flag=value ...]
@@ -55,3 +56,9 @@ positional arguments:
   key:value ... will add a key-value pair to the replacement map
   flag=value .. will set a preprocesser flag to value, defines a flag
 """
+
+FLAGS_HELP = {
+  "COS" : "the operating system mads is running on",
+  "CTIME" : "start time of compile",
+  "CWD" : "working directory of project"
+}

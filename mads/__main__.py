@@ -1,9 +1,14 @@
-import pre, tokenizer, utils, output, compiler
+import pre
+import utils
+import output
+import compiler
+import tokenizer
 from const import VERSION, PROG_NAME, HELP_MENU
 
 import argparse
 import sys
 import re
+
 
 def exit():
   sys.exit(0)
@@ -33,6 +38,9 @@ def parseArgs(args_obj):
 
   if args_obj.help:
     print(HELP_MENU)
+    print("builtin preprocessor flags:")
+    for i in options.flags:
+      print(" - " + i)
     exit()
 
   match (args_obj.input, args_obj.output):
@@ -57,7 +65,7 @@ def parseArgs(args_obj):
     starting_file = pre.parse_file(args_obj.input)
     if starting_file == 0:
       error("file '" + args_obj.input + "' does not exist")
-    if starting_file == -1:
+    elif starting_file == -1:
       error("path '" + args_obj.input + "' is a directory")
     
     log.log("preprocessor", "starting", 2)
@@ -81,9 +89,6 @@ def parseArgs(args_obj):
   
 
 if __name__ == "__main__":
-  if sys.version_info < (3, 10):
-    error("mads needs at least Python 3.10 or higher")
-
   args_parser = argparse.ArgumentParser(PROG_NAME, "usage of mads", add_help=False)
 
   args_parser.add_argument("--input", "-i", action="store")
@@ -94,7 +99,6 @@ if __name__ == "__main__":
 
   args_parser.add_argument("--segment", "-S", action="store_true")
   args_parser.add_argument("--pretty", "-p", action="store_true")
-  args_parser.add_argument("--quiet", "-Q", action="store_true")
   args_parser.add_argument("--boring", "-B", action="store_true")
 
   args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle"], default="json")
