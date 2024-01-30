@@ -8,6 +8,7 @@ from const import VERSION, PROG_NAME, HELP_MENU
 import argparse
 import sys
 import re
+import os.path
 
 
 def exit():
@@ -62,15 +63,15 @@ def parseArgs(args_obj):
   log = utils.logger(options.log_severity, 60, not options.boring)
   
   if do_compile:
-    starting_file = pre.parse_file(args_obj.input)
-    if starting_file == 0:
+    import_code, import_body = pre.parse_file(args_obj.input)
+    if import_code == -1:
       error("file '" + args_obj.input + "' does not exist")
-    elif starting_file == -1:
+    elif import_code == -2:
       error("path '" + args_obj.input + "' is a directory")
     
     log.log("preprocessor", "starting", 2)
     
-    preproc = pre.preprocesser(starting_file, args_obj.input, options, log)
+    preproc = pre.preprocesser(import_body, args_obj.input, options, log)
     preproc.parse()
 
     log.log("tokenizer", "starting", 2)

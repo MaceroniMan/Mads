@@ -1,7 +1,8 @@
 from const import REGEX, REGULAR_LINE, FILENAME_LINE
 import utils as utils
 
-import re, time
+import re
+import os.path
 
 def pre_error(error_type, error_message, line_num, lines, file, logger):
     c = logger.c
@@ -14,24 +15,16 @@ def pre_error(error_type, error_message, line_num, lines, file, logger):
 
 def parse_file(file_name):
     rv = 0
+    content = ""
     try:
         file = open(file_name, "r")
-        rv = file.read().split("\n")
+        content = file.read().split("\n")
     except FileNotFoundError:
-        rv = 0
-    except IsADirectoryError:
         rv = -1
-
-    if not rv:
-        try:
-            file = open(file_name+".mds", "r")
-            rv = file.read().split("\n")
-        except FileNotFoundError:
-            rv = 0
-        except IsADirectoryError:
-            rv = -1
+    except IsADirectoryError:
+        rv = -2
     
-    return rv
+    return (rv, content)
 
 class preprocesser(object):
     def __init__(self, parsed_lines, file_name, options, logger):
@@ -41,6 +34,7 @@ class preprocesser(object):
         self.file_name = file_name
         self.import_files = [file_name]
 
+        # for traceback errors
         self.return_lines = [(0, file_name, -1, FILENAME_LINE)]
 
         self.PREPROCESSER = re.compile(REGEX["PREPROCESSER"]+REGEX["COMMENT"])
@@ -48,7 +42,9 @@ class preprocesser(object):
     def _if(self):
         pass
     
-    def _import(self, path, line_num):
+    def _import(self, name, line_num):
+        path = os.path.abspath(name)
+
         if path in self.import_files:
             pre_error("import error", "cannot import a file that has already been imported"
                       ,line_num
@@ -56,16 +52,20 @@ class preprocesser(object):
                       ,self.file_name
                       ,self.logger)
         else:
-            self.logger.log("preprocessor", "new file imported '" + path + "'", 2)
-            new_file_body = parse_file(path)
-            if new_file_body == 0:
-                pre_error("file error", "file '" + path + "' does not exist"
+            self.logger.log("preprocessor", "new file imported '" + name + "'", 2)
+            import_code, import_body = parse_file(path)
+            # if it cant find it, check with a .mds extention
+            if import_code != 0: 
+                import_code, import_body = parse_file(path + ".mds")
+
+            if import_code == 0:
+                pre_error("file error", "file '" + name + "' does not exist"
                           ,line_num
                           ,self.lines
                           ,self.file_name
                           ,self.logger)
-            if new_file_body == -1:
-                pre_error("file error", "path '" + path + "' is a directory"
+            elif import_code == -1:
+                pre_error("file error", "path '" + name + "' is a directory"
                           ,line_num
                           ,self.lines
                           ,self.file_name
@@ -73,13 +73,16 @@ class preprocesser(object):
 
             self.import_files.append(path)
             first_name = self.file_name
-            self.file_name = path
+            self.file_name = name
 
             # the comment is just a placeholder for debug purposes
-            self.lines = self.lines[:line_num] + ["// file " + path + " was imported here"] \
-                + new_file_body + ["#internal_change_filename " + first_name] + self.lines[line_num+1:]
+            self.lines = self.lines[:line_num] \
+                        + ["// file " + path + " was imported here"] \
+                        + import_body \
+                        + ["#internal_change_filename " + first_name] \
+                        + self.lines[line_num+1:]  \
             
-            return path
+            return name
 
     def parse(self):
         multicomment = False
