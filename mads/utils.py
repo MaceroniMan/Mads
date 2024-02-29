@@ -178,7 +178,7 @@ class logger(object):
     # 1: warnings
     # 2: major milestones
     # 3: minor milestones
-    # 4: 
+    # 4: debug information
     def log(self, log_type, log_text, log_severity):
         if log_severity <= self.log_severity:
             log_type_msg = log_type

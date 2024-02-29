@@ -21,7 +21,7 @@ REGEX = {
     "DIALOUGE_QUOTES": r'(?:[^\s,"]|"(?:\\.|[^"])*")+',
     "COMMENT": r'(\s*\/\/.*)*\s*$',
 
-    "PREPROCESSER": r'#\s*(?P<command>\$?\w+)\s*(?P<argument>[\w|\.|\\|/]+)?\s*({(?P<conditional>.*)})?',
+    "PREPROCESSER": r'#\s*(?P<command>(mads:)?\w+)\s*(?P<argument>[\w|\.|\\|/]+)?\s*({(?P<conditional>.*)})?',
 
     "STRINGFMT": r'(?P<command>[\w\.]+)\(\)'
 }
@@ -50,7 +50,7 @@ optional arguments
   -Q, --quiet .................. suppress all output (except loading bar)
   -B, --boring ................. suppress all colors and fancy characters
   -f, --format {json, pickle} .. tell the compiler what the output format should be (default is json)
-  -l, --level {0, 1, 2, 3, 4} .. define the logging level (default is 1)
+  -l, --level {0, 1, 2, 3, 4} .. define the logging level (default is 2)
 
 positional arguments:
   key:value ... will add a key-value pair to the replacement map

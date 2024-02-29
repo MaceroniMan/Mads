@@ -4,10 +4,10 @@ import utils as utils
 import re
 import os.path
 
-def pre_error(error_type, error_message, line_num, lines, file, logger):
+def pre_error(error_type, error_message, line_num, virtual_line_num, lines, file, logger):
     c = logger.c
     prefix = c["red"] + c["bold"] + "preprocesser error " + c["reset"] + "in file " \
-        + c["blue"] + "'" + file + "' on line " + str(line_num+1) + c["reset"]
+        + c["blue"] + "'" + file + "' on line " + str(virtual_line_num+1) + c["reset"]
     utils.simple_error(c["red"] + c["bold"] + error_type + c["reset"]
                        ,prefix
                        ,error_message
@@ -42,36 +42,43 @@ class preprocesser(object):
     def _if(self):
         pass
     
-    def _import(self, name, line_num):
+    def _import(self, name, line_num, virtual_line_num):
         path = os.path.abspath(name)
+        append_path = str(path)
+        nice_file_name = name
 
         if path in self.import_files:
-            pre_error("import error", "cannot import a file that has already been imported"
+            pre_error("import error", "file " + name + " has already been imported"
                       ,line_num
+                      ,virtual_line_num
                       ,self.lines
                       ,self.file_name
                       ,self.logger)
         else:
-            self.logger.log("preprocessor", "new file imported '" + name + "'", 2)
+            self.logger.log("preprocessor", "starting import of '" + path + "'", 4)
             import_code, import_body = parse_file(path)
             # if it cant find it, check with a .mds extention
-            if import_code != 0: 
+            if import_code != 0:
+                append_path += ".mds"
+                nice_file_name += ".mds"
                 import_code, import_body = parse_file(path + ".mds")
 
-            if import_code == 0:
+            if import_code == -1:
                 pre_error("file error", "file '" + name + "' does not exist"
                           ,line_num
+                          ,virtual_line_num
                           ,self.lines
                           ,self.file_name
                           ,self.logger)
-            elif import_code == -1:
+            elif import_code == -2:
                 pre_error("file error", "path '" + name + "' is a directory"
                           ,line_num
+                          ,virtual_line_num
                           ,self.lines
                           ,self.file_name
                           ,self.logger)
 
-            self.import_files.append(path)
+            self.import_files.append(append_path)
             first_name = self.file_name
             self.file_name = name
 
@@ -79,13 +86,17 @@ class preprocesser(object):
             self.lines = self.lines[:line_num] \
                         + ["// file " + path + " was imported here"] \
                         + import_body \
-                        + ["#internal_change_filename " + first_name] \
+                        + ["#mads:filename_change " + first_name + "|" + str(virtual_line_num)] \
                         + self.lines[line_num+1:]  \
             
-            return name
+            self.logger.log("preprocessor", "new file imported '" + name + "'", 2)
+
+            return nice_file_name
 
     def parse(self):
         multicomment = False
+        # the incrementor is at the start of the
+        # while loop
         line_num = -1
         virtual_line_num = -1
 
@@ -96,7 +107,7 @@ class preprocesser(object):
             line_num += 1
             virtual_line_num += 1
 
-            debug_object = (line_num, self.lines, self.file_name, self.logger)
+            debug_object = (line_num, virtual_line_num, self.lines, self.file_name, self.logger)
 
             line = self.lines[line_num]
             if "\t" in line: # fail if using tabs
@@ -142,23 +153,21 @@ class preprocesser(object):
                         pre_error("syntax error", "invalid format for #undef", *debug_object)
                     
                     case ("import", x, None):
+                        file_name = self._import(x, line_num, virtual_line_num)
                         # need -1 will increment to zero on next run
                         # otherwise every import will bump line number
                         # by one line down
                         virtual_line_num = -1
-                        file_line = self._import(x, line_num)
-                        self.return_lines.append((indentation, file_line, virtual_line_num, FILENAME_LINE))
+                        self.return_lines.append((indentation, file_name, virtual_line_num, FILENAME_LINE))
                     case ("import", _, _):
                         pre_error("syntax error", "invalid format for #import", *debug_object)
 
-                    case ("internal_change_filename", x, None):
-                        # need -1 will increment to zero on next run
-                        # otherwise every import will bump line number
-                        # by one line down
-                        virtual_line_num = -1
-                        self.file_name = x
-                        self.return_lines.append((indentation, x, virtual_line_num, FILENAME_LINE))
-                    case ("internal_change_filename", _, _):
+                    case ("mads:filename_change", x, None):
+                        value_split = x.split("|")
+                        virtual_line_num = int(value_split[-1])
+                        self.file_name = "|".join(value_split[:-1])
+                        self.return_lines.append((indentation, self.file_name, virtual_line_num, FILENAME_LINE))
+                    case ("mads:filename_change", _, _):
                         pre_error("syntax error", "invalid internal command", *debug_object)
                     
                     case (_, _, _):
