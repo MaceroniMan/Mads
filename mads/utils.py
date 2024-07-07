@@ -124,6 +124,7 @@ class options(object):
         self.force = False
         self.segment = False
         self.boring = False
+        self.notodo = False
         
         self.cwd = os.getcwd()
 

@@ -38,6 +38,9 @@ class preprocesser(object):
         self.return_lines = [(0, file_name, -1, FILENAME_LINE)]
 
         self.PREPROCESSER = re.compile(REGEX["PREPROCESSER"]+REGEX["COMMENT"])
+    
+    def i_todo_log(self, todo_text):
+        pass
 
     def _if(self):
         pass
@@ -99,7 +102,6 @@ class preprocesser(object):
         # while loop
         line_num = -1
         virtual_line_num = -1
-        notify_inc = 24 # increment notify to 24 to leave room for future system
 
         while line_num+1 < len(self.lines):
             self.logger.bar_max = len(self.lines)
@@ -117,12 +119,13 @@ class preprocesser(object):
 
             line = line.lstrip()
 
-            #if (todo_idx := line.find("//TODO:")) != -1:
-            #    notify_inc += 1
-            #    todo_text = "(" + f"{notify_inc:#0{6}x}" + ")" + line[todo_idx+7:]
-
-            #    todo_text = todo_text.replace("<", self.logger.c["bold"]).replace(">", self.logger.c["reset"])
-            #    self.logger.log("preprocessor", todo_text, -1)
+            if (todo_idx := line.find("//TODO:")) != -1:
+                if not self.options.notodo:
+                    todo_text = line[todo_idx+7:]
+                    loc = self.file_name + " on " + str(virtual_line_num)
+                    self.i_todo_log(loc + ":" + todo_text)
+                    todo_text = todo_text.replace("<", self.logger.c["blue"] + self.logger.c["bold"]).replace(">", self.logger.c["reset"])
+                    self.logger.log(loc, todo_text, -1)
 
             if multicomment:
                 if line.startswith("//~"):

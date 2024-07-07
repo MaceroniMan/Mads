@@ -105,6 +105,7 @@ if __name__ == "__main__":
   args_parser.add_argument("--quiet", "-Q", action="store_true") # TODO: implement
   args_parser.add_argument("--silent", "-QQ", action="store_true") # TODO: implement
 
+  args_parser.add_argument("--notodo", "-T", action="store_true") # TODO: implement
   args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle"], default="json")
   args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3, 4], default=2, type=int)
 
