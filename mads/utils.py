@@ -188,7 +188,11 @@ class logger(object):
             time_str = datetime.datetime.now().strftime("%m/%d %H:%M:%S.%f")[:-3]
             
             log_type = ""
-            if log_severity == 1:
+            if log_severity == -1:
+                log_type = self.c["bold"]   + "todo     " + self.c["reset"]
+                log_text = log_text.replace("<", self.c["bold"]).replace(">", self.c["reset"])
+                log_text = self.c["underline"] + log_text + self.c["reset"]
+            elif log_severity == 1:
                 log_type = self.c["yellow"] + "warning  " + self.c["reset"]
             elif log_severity == 2:
                 log_type = self.c["green"]  + "milestone" + self.c["reset"]

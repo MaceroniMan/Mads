@@ -41,6 +41,10 @@ def dump(compiler_obj, file_name, options, logger):
     path = os.path.join(options.cwd, file[0])
     logger.log("output", "output file at '" + file[0] + "'", 2)
     if options.end_format == "json":
+      logger.log("output", "output with format of 'json'", 4)
+      if options.pretty:
+        logger.log("output", " + prettify json output", 4)
       dump_json(file[1], path, options)
     elif options.end_format == "pickle":
+      logger.log("output", "output with format of 'pickle'", 4)
       dump_pickle(file[1], path, options)

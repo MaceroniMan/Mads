@@ -93,6 +93,7 @@ if __name__ == "__main__":
   args_parser = argparse.ArgumentParser(PROG_NAME, "usage of mads", add_help=False)
 
   args_parser.add_argument("--input", "-i", action="store")
+  args_parser.add_argument("--console", "-C", action="store_true") # TODO: implement
   args_parser.add_argument("--output", "-o", action="store")
 
   args_parser.add_argument('--version', action='store_true')
@@ -101,6 +102,8 @@ if __name__ == "__main__":
   args_parser.add_argument("--segment", "-S", action="store_true")
   args_parser.add_argument("--pretty", "-p", action="store_true")
   args_parser.add_argument("--boring", "-B", action="store_true")
+  args_parser.add_argument("--quiet", "-Q", action="store_true") # TODO: implement
+  args_parser.add_argument("--silent", "-QQ", action="store_true") # TODO: implement
 
   args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle"], default="json")
   args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3, 4], default=2, type=int)

@@ -2,6 +2,7 @@ COMPILEROPTIONS = { # compiler options
     "output.interactions": "interactions",
     "output.dialouge": "dialouge",
     "output.options": "options",
+    "output.entrypoints": "entrypoints",
 
     "output.options.ref": "ref",
     "output.options.text": "text",
@@ -11,7 +12,7 @@ COMPILEROPTIONS = { # compiler options
 }
 
 REGEX = {
-    "TAG": r'\[(?P<id>(\w|-|\.)+)\](\s*->\s*(?P<ref>(\.|\w|-)+))?',
+    "TAG": r'\[(?P<id>(\w|-|\.)+)\]((\s*->\s*(?P<ref>(\.|\w|-)+))|(\s*{(?P<conditional>.*)}))?',
     "FIELD_UNQUOTE": r'\*\s*(?P<id>(\w|\.|-)+):\s*(?P<value>(\w|\.|-|\$)+)(\s*{\s*(?P<conditional>.*)\s*})?',
     "FIELD_QUOTE": r'\*\s*(?P<id>(\w|\.|-)+):\s*("(?P<value>.*)")(\s*{\s*(?P<conditional>.*)\s*})?',
     "DIALOUGE": r'\?\s*(?P<text>".*")',
@@ -31,10 +32,10 @@ FILENAME_LINE = "file"
 
 CONFIGURATION_NAME = "info"
 
-VERSION = 1.0
+VERSION = 1.1
 PROG_NAME = "mads"
 HELP_MENU = """
-usage: mads -i INPUT -o OUTPUT [-h] [-L] [-S] [-p] [-Q] [-B] [-f {json, xml}] [-l {0, 1, 2, 3, 4}] [-t {windows, linux}] [key:value ...] [flag=value ...]
+usage: mads -i INPUT -o OUTPUT [-h] [-L] [-S] [-p] [-Q] [-B] [-f {json, xml}] [-l {0, 1, 2, 3, 4}] [key:value ...] [flag=value ...]
 
 mads, a dialouge script
 

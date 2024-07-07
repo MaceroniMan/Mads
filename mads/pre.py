@@ -89,7 +89,7 @@ class preprocesser(object):
                         + ["#mads:filename_change " + first_name + "|" + str(virtual_line_num)] \
                         + self.lines[line_num+1:]  \
             
-            self.logger.log("preprocessor", "new file imported '" + name + "'", 2)
+            self.logger.log("preprocessor", "new file imported '" + name + "'", 3)
 
             return nice_file_name
 
@@ -99,6 +99,7 @@ class preprocesser(object):
         # while loop
         line_num = -1
         virtual_line_num = -1
+        notify_inc = 24 # increment notify to 24 to leave room for future system
 
         while line_num+1 < len(self.lines):
             self.logger.bar_max = len(self.lines)
@@ -115,6 +116,13 @@ class preprocesser(object):
             indentation = len(line)-len(line.lstrip())
 
             line = line.lstrip()
+
+            #if (todo_idx := line.find("//TODO:")) != -1:
+            #    notify_inc += 1
+            #    todo_text = "(" + f"{notify_inc:#0{6}x}" + ")" + line[todo_idx+7:]
+
+            #    todo_text = todo_text.replace("<", self.logger.c["bold"]).replace(">", self.logger.c["reset"])
+            #    self.logger.log("preprocessor", todo_text, -1)
 
             if multicomment:
                 if line.startswith("//~"):

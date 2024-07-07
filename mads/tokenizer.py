@@ -56,19 +56,31 @@ class tokenizer(object):
         
         return 0
 
-    def i_make_interaction(self, npc_id, secondary_scene, name, dbg_items):
+    def i_make_interaction(self, npc_id, secondary_scene, interaction_name, dbg_items):
         # return values:
         # 1: name already exists
         # 0: success
 
-        if name in self.data[npc_id][secondary_scene]["interactions"]:
+        if interaction_name in self.data[npc_id][secondary_scene]["interactions"]:
             return 1
         else:
-            new_interaction = dbg_items | {"dialouge": [], "options": [], "fields" : []}
+            new_interaction = dbg_items | {"dialouge": [], "options": [], "fields": []}
 
-            self.data[npc_id][secondary_scene]["interactions"][name] = new_interaction
+            self.data[npc_id][secondary_scene]["interactions"][interaction_name] = new_interaction
         
         return 0
+
+    def i_add_head_conditional(self, npc_id, secondary_scene, interaction_name, conditional):
+        self.data[npc_id][secondary_scene]["entrypoints"].append({
+                # make the ref a full ref so the ref_parse function will be ok with it
+                "ref": npc_id + "." + secondary_scene + "." + interaction_name,
+                "conditional": conditional,
+
+                "line_num": self.line_num,
+                "scope_lines": self.scope_lines.copy(),
+                "scope_tree": self.scope_tree.copy(),
+                "file_name": self.file_name
+            })
 
     def i_check_indent(self, indentation):
         if indentation == 0: # top level tag
@@ -112,13 +124,17 @@ class tokenizer(object):
     def _tag(self, match, indentation):
         m_id = match.group("id")
         m_ref = match.group("ref")
+        m_cond = match.group("conditional")
 
         current_indent = self.i_check_indent(indentation)
-        
+
         if current_indent == -1: # top level tag, defines a whole interaction menu
             dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
             primary_scene, secondary_scene = self.i_split_scene(m_id)
             self.do_config = False
+
+            if m_cond != None:
+                dbg.error("syntax error", "conditional not allowed on scene definition", self.line_num)
 
             if primary_scene == "" and secondary_scene == CONFIGURATION_NAME:
                 if self.config_done: # if there has already been a .info
@@ -153,6 +169,7 @@ class tokenizer(object):
                     "type" : "config" if self.do_config else "scene",
                     "interactions" : {},
                     "fields" : [],
+                    "entrypoints" : [],
 
                     "line_num": self.line_num,
                     "scope_lines": self.scope_lines.copy(),
@@ -187,6 +204,9 @@ class tokenizer(object):
                     did_you_mean_text = utils.did_you_mean(m_id, valid_interactions)
                     dbg.error("name error", "the interaction '" + m_id + "' is not allowed here" \
                         + did_you_mean_text, self.line_num)
+            
+            if m_cond != None:
+                self.i_add_head_conditional(self.scene[0], self.scene[1], m_id, m_cond)
 
             rv = self.i_make_interaction(self.scene[0], self.scene[1], m_id, {
                 "line_num": self.line_num,
@@ -238,7 +258,7 @@ class tokenizer(object):
             })
         else:
             dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
-            dbg.error("syntax error", "invalid location for a data field", self.line_num)
+            dbg.error("syntax error", "invalid location for a data field, check the indentation", self.line_num)
 
     def _adhoc(self, match, indentation):
         m_text = match.group("text")
@@ -293,6 +313,7 @@ class tokenizer(object):
                 "text": m_text,
                 "ref": m_ref,
                 "conditional": m_condid,
+
                 "line_num": self.line_num,
                 "scope_lines": self.scope_lines.copy(),
                 "scope_tree": self.scope_tree.copy(),
@@ -312,6 +333,7 @@ class tokenizer(object):
 
             self.data[self.scene[0]][self.scene[1]]["interactions"][self.scope_tree[current_indent]]["dialouge"].append({
                 "texts": utils.parse_string(m_text),
+
                 "line_num": self.line_num,
                 "scope_lines": self.scope_lines.copy(),
                 "scope_tree": self.scope_tree.copy(),
