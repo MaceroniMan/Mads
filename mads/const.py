@@ -35,27 +35,34 @@ CONFIGURATION_NAME = "info"
 VERSION = 1.1
 PROG_NAME = "mads"
 HELP_MENU = """
-usage: mads -i INPUT -o OUTPUT [-h] [-L] [-S] [-p] [-Q] [-B] [-f {json, xml}] [-l {0, 1, 2, 3, 4}] [key:value ...] [flag=value ...]
+usage: mads -i INPUT {-o OUTPUT, -c} [-h] [-L] [-S] [-p] [-Q] [-T PATH] [-B] [-f FORMAT] [-l {0,1,2,3,4,5}] [key:value ...] [flag=value ...]
 
 mads, a dialouge script
 
 required arguments:
   -i, --input INPUT .... define the entrypoint for the compiler (a .mds file)
   -o, --output OUTPUT .. define the output file
+  -c, --console ........ will direct output to the console
 
-optional arguments
-  -h, --help ................... show this help menu and exit
-  -v, --version ................ show version information and exit
-  -S, --segment ................ split up the output files by primary scene
-  -p, --pretty ................. pretty-print the output json or xml file
-  -Q, --quiet .................. suppress all output (except loading bar)
-  -B, --boring ................. suppress all colors and fancy characters
-  -f, --format {json, pickle} .. tell the compiler what the output format should be (default is json)
-  -l, --level {0, 1, 2, 3, 4} .. define the logging level (default is 2)
+optional arguments:
+  -h, --help ................. show this help menu and exit
+  -v, --version .............. show version information and exit
+  -S, --segment .............. split up the output files by primary scene
+  -p, --pretty ............... pretty-print the output json or xml file
+  -Q, --silent ............... suppress all output except errors
+  -T, --todo PATH ............ will show 
+  -B, --boring ............... suppress all colors and fancy characters
+  -f, --format FORMAT ........ tell the compiler what the output format should be (default is json)
+  -l, --level {0,1,2,3,4,5} .. define the logging level (default is 2)
 
 positional arguments:
   key:value ... will add a key-value pair to the replacement map
   flag=value .. will set a preprocesser flag to value, defines a flag
+
+formats:
+  json .... default format
+  pickle .. will output a pickled object that matches the json object
+  xml ..... will convert json to a xml object (not supported yet)
 """
 
 FLAGS_HELP = {

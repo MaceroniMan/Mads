@@ -15,6 +15,9 @@ def dump_json(data, file_name, options):
 def dump_pickle(data, file_name, options):
   pickle.dump(data, file_name)
 
+def dump_xml(data, file_name, options):
+  pass
+
 def split_file_name(path_name):
   file_path, file_name = os.path.split(path_name)
   file_name_split = file_name.split(".")
@@ -48,3 +51,8 @@ def dump(compiler_obj, file_name, options, logger):
     elif options.end_format == "pickle":
       logger.log("output", "output with format of 'pickle'", 4)
       dump_pickle(file[1], path, options)
+    elif options.end_format == "xml":
+      logger.log("output", "output with format of 'xml'", 4)
+      if options.pretty:
+        logger.log("output", " + prettify xml output", 4)
+      dump_xml(file[1], path, options)
