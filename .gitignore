@@ -31,7 +31,6 @@ MANIFEST
 *.json
 
 # Other
-TODO
 mads.code-workspace
 main.py
 *.zip
