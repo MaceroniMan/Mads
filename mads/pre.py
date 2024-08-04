@@ -120,12 +120,11 @@ class preprocesser(object):
             line = line.lstrip()
 
             if (todo_idx := line.find("//TODO:")) != -1:
-                if not self.options.notodo:
-                    todo_text = line[todo_idx+7:]
-                    loc = self.file_name + " on " + str(virtual_line_num)
-                    self.i_todo_log(loc + ":" + todo_text)
-                    todo_text = todo_text.replace("<", self.logger.c["blue"] + self.logger.c["bold"]).replace(">", self.logger.c["reset"])
-                    self.logger.log(loc, todo_text, -1)
+                todo_text = line[todo_idx+7:]
+                loc = self.file_name + " on " + str(virtual_line_num)
+                self.i_todo_log(loc + ":" + todo_text)
+                todo_text = todo_text.replace("<", self.logger.c["blue"] + self.logger.c["bold"]).replace(">", self.logger.c["reset"])
+                self.logger.log(loc, todo_text, -1)
 
             if multicomment:
                 if line.startswith("//~"):

@@ -44,14 +44,18 @@ def parseArgs(args_obj):
       print(" - " + i)
     exit()
 
-  match (args_obj.input, args_obj.output):
-    case (None, None):
+  match (args_obj.input, args_obj.output, args_obj.console):
+    case (None, None, None):
       error("no actionable arguments given")
-    case (None, _):
-      error("must have both --input and --output")
-    case (_, None):
-      error("must have both --input and --output")
-    case (_, _):
+    case (None, _, _):
+      error("must have an --input command")
+    case (_, None, None):
+      error("must have either --output or --console")
+    case (_, _, _):
+      do_compile = True
+    case (_, _, None):
+      do_compile = True
+    case (_, None, _):
       do_compile = True
   
   options.pretty = args_obj.pretty
@@ -59,6 +63,7 @@ def parseArgs(args_obj):
   options.end_format = args_obj.format
   options.segment = args_obj.segment
   options.boring = args_obj.boring
+  options.todopath = args_obj.todo
 
   log = utils.logger(options.log_severity, 60, not options.boring)
   
@@ -93,20 +98,19 @@ if __name__ == "__main__":
   args_parser = argparse.ArgumentParser(PROG_NAME, "usage of mads", add_help=False)
 
   args_parser.add_argument("--input", "-i", action="store")
-  args_parser.add_argument("--console", "-C", action="store_true") # TODO: implement
+  args_parser.add_argument("--console", "-c", action="store_true") # TODO: implement
   args_parser.add_argument("--output", "-o", action="store")
 
-  args_parser.add_argument('--version', action='store_true')
+  args_parser.add_argument("--version", "-v" ,action='store_true')
   args_parser.add_argument("--help", "-h", action="store_true")
 
   args_parser.add_argument("--segment", "-S", action="store_true")
   args_parser.add_argument("--pretty", "-p", action="store_true")
   args_parser.add_argument("--boring", "-B", action="store_true")
-  args_parser.add_argument("--quiet", "-Q", action="store_true") # TODO: implement
-  args_parser.add_argument("--silent", "-QQ", action="store_true") # TODO: implement
+  args_parser.add_argument("--silent", "-Q", action="store_true") # TODO: implement
 
   args_parser.add_argument("--notodo", "-T", action="store_true") # TODO: implement
-  args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle"], default="json")
+  args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle", "xml"], default="json")
   args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3, 4], default=2, type=int)
 
   args_parser.add_argument('positionals', metavar='N', type=str, nargs='*')
