@@ -13,8 +13,12 @@ COMPILEROPTIONS = { # compiler options
 
 REGEX = {
     "TAG": r'\[(?P<id>(\w|-|\.)+)\]((\s*->\s*(?P<ref>(\.|\w|-)+))|(\s*{(?P<conditional>.*)}))?',
-    "FIELD_UNQUOTE": r'\*\s*(?P<id>(\w|\.|-)+):\s*(?P<value>(\w|\.|-|\$)+)(\s*{\s*(?P<conditional>.*)\s*})?',
-    "FIELD_QUOTE": r'\*\s*(?P<id>(\w|\.|-)+):\s*("(?P<value>.*)")(\s*{\s*(?P<conditional>.*)\s*})?',
+
+    "FIELD_REFERENCE_ID": r'\*\s*(?P<id>(\w|\.|-)+):\s*(?P<value>(\w|\.|-|\$)+)(\s*{\s*(?P<conditional>.*)\s*})?',
+    "FIELD_STRING": r'\*\s*(?P<id>(\w|\.|-)+):\s*("(?P<value>.*)")(\s*{\s*(?P<conditional>.*)\s*})?',
+    "FIELD_NUMBER": r'\*\s*(?P<id>(\w|\.|-)+):\s*(?P<value>(\d|\.|_)+)(\s*{\s*(?P<conditional>.*)\s*})?',
+    "FIELD_SCRIPT": r'\*\s*(?P<id>(\w|\.|-)+):\s*(?P<value>(\?))(\s*{\s*(?P<conditional>.*)\s*})?',
+
     "DIALOUGE": r'\?\s*(?P<text>".*")',
     "OPTION": r'>\s*"(?P<text>.*)"\s*(?P<ref>(\$\.|\.|-|\w)+)(\s*{\s*(?P<conditional>.*)\s*})?',
     "ADHOC": r':\s*"(?P<text>.*)"\s*(\[(?P<id>(\w|-|\.)+)\])?(\s*{\s*(?P<conditional>.*)\s*})?',
