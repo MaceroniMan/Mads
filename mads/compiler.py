@@ -2,9 +2,8 @@ from const import COMPILEROPTIONS, VERSION, REGEX
 import utils
 
 import re
-import difflib
 
-class compiler(object):
+class Compiler(object):
     def __init__(self, tokenizer, options, logger):
         self.tokens = tokenizer.data
         self.lines = tokenizer.lines
@@ -58,7 +57,7 @@ class compiler(object):
         self.logger.log("compiler", "parsing fields for " + parent_name, 4)
         current_fields = {}
         for field in fields:
-            dbg = utils.dbg(self.logger, field["scope_tree"], field["scope_lines"], self.lines, field["file_name"])
+            dbg = utils.Debug(self.logger, field["scope_tree"], field["scope_lines"], self.lines, field["file_name"])
             line_num = field["line_num"]
 
             # cannot have a key the same as any of the required items in output
@@ -161,7 +160,7 @@ class compiler(object):
     def i_parse_ref(self, primary_scene, secondary_scene, ref, line_num, scope_tree, scope_lines, file_name):
         end_ref = ""
         full_ref = ""
-        dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, file_name)
+        dbg = utils.Debug(self.logger, scope_tree, scope_lines, self.lines, file_name)
 
         # is a local ref
         if ref.startswith("$."):
@@ -257,7 +256,7 @@ class compiler(object):
     def i_parse_info_primary(self, field_name, field):
         if field_name == "version":
             v = utils.try_type(field["values"][-1], float)
-            dbg = utils.dbg(self.logger, field["scope_trees"][-1]
+            dbg = utils.Debug(self.logger, field["scope_trees"][-1]
                             ,field["scope_lines"][-1]
                             ,self.lines
                             ,field["file_name"])
@@ -280,7 +279,7 @@ class compiler(object):
                     else:
                         self.options.support[value] = True
                 else:
-                    dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, field["file_name"])
+                    dbg = utils.Debug(self.logger, scope_tree, scope_lines, self.lines, field["file_name"])
                     msg = "mads does not support " + value
                     dbg.error("support error", msg, line_num)
     
@@ -290,7 +289,7 @@ class compiler(object):
         fields = [i["id"] for i in tag_obj["fields"]]
         for required_field in required:
             if required_field not in fields:
-                dbg = utils.dbg(self.logger
+                dbg = utils.Debug(self.logger
                                 ,tag_obj["scope_tree"]
                                 ,tag_obj["scope_lines"]
                                 ,self.lines
@@ -331,7 +330,7 @@ class compiler(object):
                         # it is a valid interaction
                         for field_name in interaction_fields:
                             field = interaction_fields[field_name]
-                            dbg = utils.dbg(self.logger, field["scope_trees"][-1]
+                            dbg = utils.Debug(self.logger, field["scope_trees"][-1]
                                             ,field["scope_lines"][-1]
                                             ,self.lines
                                             ,field["file_name"])
@@ -381,7 +380,7 @@ class compiler(object):
                     continue
                 elif scene["type"] == "ref": # if reference
                     self.logger.log("compiler", "compiling reference " + scene["ref"], 3)
-                    dbg = utils.dbg(self.logger
+                    dbg = utils.Debug(self.logger
                                 ,scene["scope_tree"]
                                 ,scene["scope_lines"]
                                 ,self.lines

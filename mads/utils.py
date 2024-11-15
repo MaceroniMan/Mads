@@ -77,7 +77,7 @@ def did_you_mean(term, other_terms):
     else:
         return ", did you mean '" + close_term[0] + "'?"
 
-class dbg(object):
+class Debug(object):
     # takes the logger object for colors
     def __init__(self, logger, scope_tree, scope_lines, lines, file_name):
         self.scope_tree = scope_tree
@@ -116,7 +116,7 @@ class dbg(object):
         simple_error(self.c["red"] + self.c["bold"] + error_type + self.c["reset"], prefix, error_text, body)
 
 # contains the configuration application-wide
-class options(object):
+class Options(object):
     def __init__(self):
         self.log_severity = 1
         self.end_format = "json"
@@ -142,7 +142,7 @@ class options(object):
            "shortcut-ref": True
         }
 
-class logger(object):
+class Logger(object):
     def __init__(self, log_severity, bar_max, colors=True):
         self.bar_max = bar_max
         self.bar_cnt = 0

@@ -3,7 +3,7 @@ import utils
 
 import re
 
-class tokenizer(object):
+class Tokenizer(object):
     def __init__(self, preprocesser, options, logger):
         self.lines = preprocesser.return_lines
         self.options = options
@@ -97,7 +97,7 @@ class tokenizer(object):
                 # find the current indent level
                 current_indent = self.indentation_tree.index(indentation)
             except ValueError:
-                dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                 dbg.error("indentation error", "invalid indentation", self.line_num)
 
             self.scope_tree = self.scope_tree[:current_indent+1]
@@ -120,7 +120,7 @@ class tokenizer(object):
             if len(non_blank_items) >= 2:
                 return non_blank_items[0], ".".join(non_blank_items[1:])
             else:
-                dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                 dbg.error("syntax error", "invalid scene definition", self.line_num)
     
     def _tag(self, match, indentation):
@@ -131,7 +131,7 @@ class tokenizer(object):
         current_indent = self.i_check_indent(indentation)
 
         if current_indent == -1: # top level tag, defines a whole interaction menu
-            dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+            dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
             primary_scene, secondary_scene = self.i_split_scene(m_id)
             self.do_config = False
 
@@ -179,7 +179,7 @@ class tokenizer(object):
                     "file_name": self.file_name
                 })
                 if rv == 1:
-                    dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                    dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                     dbg.error("syntax error", "scene already exists", self.line_num)
 
                 self.scene = [primary_scene, secondary_scene]
@@ -191,7 +191,7 @@ class tokenizer(object):
             
         elif current_indent == 0: # the start of a interaction menu
             if m_ref != None:
-                dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                 dbg.error("syntax error", "cannot have a scene reference here", self.line_num)
 
             if len(self.scope_tree) != 1: # not the first element in the menu
@@ -202,7 +202,7 @@ class tokenizer(object):
             if self.do_config:
                 valid_interactions = ["declare.scene", "declare.interaction", "compiler"]
                 if not m_id in valid_interactions:
-                    dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                    dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                     did_you_mean_text = utils.did_you_mean(m_id, valid_interactions)
                     dbg.error("name error", "the interaction '" + m_id + "' is not allowed here" \
                         + did_you_mean_text, self.line_num)
@@ -217,7 +217,7 @@ class tokenizer(object):
                 "file_name": self.file_name
             })
             if rv == 1:
-                dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                 dbg.error("syntax error", "dialouge already exists", self.line_num)
             
             self.scope_tree.append(m_id)
@@ -227,7 +227,7 @@ class tokenizer(object):
             self.dialouge_id = m_id
 
         else:
-            dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+            dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
             # tag exists somewhere it is not supposed to
             dbg.error("syntax error", "cannot defign a interaction here", self.line_num)
 
@@ -261,7 +261,7 @@ class tokenizer(object):
                 "file_name": self.file_name
             })
         else:
-            dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+            dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
             dbg.error("syntax error", "invalid location for a data field, check the indentation", self.line_num)
 
     def _adhoc(self, match, indentation):
@@ -283,7 +283,7 @@ class tokenizer(object):
             })
 
             if rv == 1:
-                dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                 dbg.error("syntax error", "interaction already exists", self.line_num)
             
             self.data[self.scene[0]][self.scene[1]]["interactions"][self.scope_tree[current_indent]]["options"].append({
@@ -301,7 +301,7 @@ class tokenizer(object):
             self.next_indent = True # the next line will run the indent operation
 
         else:
-            dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+            dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
             dbg.error("syntax error", "invalid location for a adhoc option", self.line_num)
 
     def _option(self, match, indentation):
@@ -325,7 +325,7 @@ class tokenizer(object):
             })
 
         else:
-            dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+            dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
             dbg.error("syntax error", "invalid location for a option", self.line_num)
 
     def _dialouge(self, match, indentation):
@@ -345,7 +345,7 @@ class tokenizer(object):
             })
 
         else:
-            dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+            dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
             dbg.error("syntax error", "invalid location for a dialouge line", self.line_num)
 
     def parse(self):
@@ -364,7 +364,7 @@ class tokenizer(object):
                 if self.next_indent:
                     if len(self.indentation_tree) >= 1:
                         if self.indentation_tree[-1] >= indentation:
-                            dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                            dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                             dbg.error("indentation error", "line must be indented", self.line_num)
                     self.indentation_tree.append(indentation)
                     self.next_indent = False
@@ -381,24 +381,24 @@ class tokenizer(object):
                     self._field(match, indentation, "script")
                 elif (match := self.ADHOC.match(line)) != None:
                     if self.do_config:
-                        dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                        dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                         dbg.error("syntax error", "not allowed inside of .info")
                     else:
                         self._adhoc(match, indentation)
                 elif (match := self.DIALOUGE.match(line)) != None:
                     if self.do_config:
-                        dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                        dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                         dbg.error("syntax error", "not allowed inside of .info")
                     else:
                         self._dialouge(match, indentation)
                 elif (match := self.OPTION.match(line)) != None:
                     if self.do_config:
-                        dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                        dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                         dbg.error("syntax error", "not allowed inside of .info", self.line_num)
                     else:
                         self._option(match, indentation)
                 else:
-                    dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
+                    dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
                     dbg.error("syntax error", "malformed line", self.line_num)
                     
         self.logger.end()

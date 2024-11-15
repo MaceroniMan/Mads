@@ -29,7 +29,7 @@ def parsePositionals(args_obj, options):
 
 def parseArgs(args_obj):
   do_compile = False
-  options = utils.options()
+  options = utils.Options()
 
   parsePositionals(args_obj.positionals, options)
 
@@ -65,7 +65,7 @@ def parseArgs(args_obj):
   options.boring = args_obj.boring
   options.notodo = args_obj.notodo
 
-  log = utils.logger(options.log_severity, 60, not options.boring)
+  log = utils.Logger(options.log_severity, 60, not options.boring)
   
   if do_compile:
     import_code, import_body = pre.parse_file(args_obj.input)
@@ -76,17 +76,17 @@ def parseArgs(args_obj):
     
     log.log("preprocessor", "starting", 2)
     
-    preproc = pre.preprocesser(import_body, args_obj.input, options, log)
+    preproc = pre.Preprocesser(import_body, args_obj.input, options, log)
     preproc.parse()
 
     log.log("tokenizer", "starting", 2)
 
-    tokens = tokenizer.tokenizer(preproc, options, log)
+    tokens = tokenizer.Tokenizer(preproc, options, log)
     tokens.parse()
 
     log.log("compiler", "starting", 2)
 
-    compiled = compiler.compiler(tokens, options, log)
+    compiled = compiler.Compiler(tokens, options, log)
     compiled.parse()
 
     log.log("output", "compiler", 2)

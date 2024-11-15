@@ -26,7 +26,7 @@ def parse_file(file_name):
     
     return (rv, content)
 
-class preprocesser(object):
+class Preprocesser(object):
     def __init__(self, parsed_lines, file_name, options, logger):
         self.lines = parsed_lines
         self.options = options
