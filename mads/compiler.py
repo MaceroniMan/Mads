@@ -25,7 +25,7 @@ class Compiler(object):
 
         self.STRINGFMT = re.compile(REGEX["STRINGFMT"])
     
-    def i_find_refs(self):
+    def cFindRefs(self):
         self.logger.log("compiler", "finding references", 3)
         for primary_scene in self.tokens:
             for secondary_scene in self.tokens[primary_scene]:
@@ -41,7 +41,7 @@ class Compiler(object):
                     # as that is checked in the tokenizer
                     self.interaction_refs.append(ref)
 
-    def i_fmt(self, string):
+    def cFormat(self, string):
         for key, value in self.options.replacements.items():
             string = string.replace(key.lower() + "()", value)
 
@@ -53,7 +53,7 @@ class Compiler(object):
 
         return string
 
-    def i_parse_fields(self, fields, rv, types, primary_scene, secondary_scene, parent_name):
+    def cParseFields(self, fields, rv, types, primary_scene, secondary_scene, parent_name):
         self.logger.log("compiler", "parsing fields for " + parent_name, 4)
         current_fields = {}
         for field in fields:
@@ -76,7 +76,7 @@ class Compiler(object):
             field_value = ""
             # set the correct types
             if field["type"] == "ref-id":
-                field_value = self.i_parse_ref(primary_scene, secondary_scene,
+                field_value = self.cParseRef(primary_scene, secondary_scene,
                                                                 field["value"],
                                                                 field["line_num"],
                                                                 field["scope_tree"],
@@ -157,7 +157,7 @@ class Compiler(object):
 
         return rv
 
-    def i_parse_ref(self, primary_scene, secondary_scene, ref, line_num, scope_tree, scope_lines, file_name):
+    def cParseRef(self, primary_scene, secondary_scene, ref, line_num, scope_tree, scope_lines, file_name):
         end_ref = ""
         full_ref = ""
         dbg = utils.Debug(self.logger, scope_tree, scope_lines, self.lines, file_name)
@@ -200,9 +200,9 @@ class Compiler(object):
         else:
             dbg.error("reference error", "reference '" + full_ref + "' does not exist", line_num)
     
-    def i_parse_interaction(self, interaction, primary_scene, secondary_scene):
+    def cParseInteraction(self, interaction, primary_scene, secondary_scene):
         interaction_name = ".".join(interaction["scope_tree"])
-        current_interactions = self.i_parse_fields(interaction["fields"], {}, self.interaction_types_fields,
+        current_interactions = self.cParseFields(interaction["fields"], {}, self.interaction_types_fields,
                                                    primary_scene,
                                                    secondary_scene,
                                                    interaction_name)
@@ -215,24 +215,24 @@ class Compiler(object):
             current_interactions[self.co["output.options"]].append([
                 condt,
                 {
-                    self.co["output.options.ref"]: self.i_parse_ref(primary_scene, secondary_scene,
+                    self.co["output.options.ref"]: self.cParseRef(primary_scene, secondary_scene,
                                                                     option["ref"],
                                                                     option["line_num"],
                                                                     option["scope_tree"],
                                                                     option["scope_lines"],
                                                                     option["file_name"]),
-                    self.co["output.options.text"]: self.i_fmt(option["text"])
+                    self.co["output.options.text"]: self.cFormat(option["text"])
                 }
             ])
         
         for dialouge in interaction["dialouge"]:
             current_interactions[self.co["output.dialouge"]].append([])
             for line in dialouge["texts"]:
-                current_interactions[self.co["output.dialouge"]][-1].append(self.i_fmt(line))
+                current_interactions[self.co["output.dialouge"]][-1].append(self.cFormat(line))
         
         return current_interactions
 
-    def i_parse_info_fields(self, fields):
+    def cParseInfoFields(self, fields):
         rv = {}
         for field in fields:
             if field["id"] in rv:
@@ -253,9 +253,9 @@ class Compiler(object):
                 }
         return rv
 
-    def i_parse_info_primary(self, field_name, field):
+    def cParseInfoPrimary(self, field_name, field):
         if field_name == "version":
-            v = utils.try_type(field["values"][-1], float)
+            v = utils.tryType(field["values"][-1], float)
             dbg = utils.Debug(self.logger, field["scope_trees"][-1]
                             ,field["scope_lines"][-1]
                             ,self.lines
@@ -285,7 +285,7 @@ class Compiler(object):
     
     # this function uses 'tag' as it is for both interactions
     # and scenes
-    def i_check_required(self, tag_obj, required, tag_type):
+    def cCheckRequired(self, tag_obj, required, tag_type):
         fields = [i["id"] for i in tag_obj["fields"]]
         for required_field in required:
             if required_field not in fields:
@@ -297,19 +297,19 @@ class Compiler(object):
                 dbg.error("requirement error", "field '" + required_field + "' does not exist in " + tag_type
                           ,tag_obj["line_num"])
 
-    def i_parse_required(self):
+    def cParseRequired(self):
         self.logger.log("compiler", "resolving required fields", 3)
         for primary_scene in self.tokens:
             for secondary_scene in self.tokens[primary_scene]:
                 scene = self.tokens[primary_scene][secondary_scene]
                 if scene["type"] == "scene":
-                    self.i_check_required(scene, self.scene_require, "scene")
+                    self.cCheckRequired(scene, self.scene_require, "scene")
                     for interaction_name in scene["interactions"]:
                         interaction = scene["interactions"][interaction_name]
-                        self.i_check_required(interaction, self.interaction_require, "interaction")
+                        self.cCheckRequired(interaction, self.interaction_require, "interaction")
 
     def parse(self):
-        self.i_find_refs()
+        self.cFindRefs()
 
         # find the number of scenes
         # and compile info
@@ -320,12 +320,12 @@ class Compiler(object):
                 if self.tokens[i][p]["type"] == "config":
                     config_scene = self.tokens[i][p]
                     self.logger.log("compiler", "compiling configuration", 3)
-                    primary_fields = self.i_parse_info_fields(config_scene["fields"])
+                    primary_fields = self.cParseInfoFields(config_scene["fields"])
                     for field in primary_fields:
-                        self.i_parse_info_primary(field, primary_fields[field])
+                        self.cParseInfoPrimary(field, primary_fields[field])
 
                     for interaction in config_scene["interactions"]:
-                        interaction_fields = self.i_parse_info_fields(config_scene["interactions"][interaction]["fields"])
+                        interaction_fields = self.cParseInfoFields(config_scene["interactions"][interaction]["fields"])
                         # the tokenizer checks to make sure 
                         # it is a valid interaction
                         for field_name in interaction_fields:
@@ -361,7 +361,7 @@ class Compiler(object):
                                         self.co[field_name] = field["values"][-1]
                                     else:
                                         error_msg = "compiler option does not exist" \
-                                            + utils.did_you_mean(field_name, self.co)
+                                            + utils.didYouMean(field_name, self.co)
                                         dbg.error("name error", error_msg, field["line_nums"][-1])
                                 case [*_]:
                                     dbg.error("name error", "invalid option", field["line_nums"][-1])
@@ -407,7 +407,7 @@ class Compiler(object):
                     entrypoint_list = []
                     # copy over the pre-defined entrypoints
                     for entrypoint in scene["entrypoints"]:
-                        ref = self.i_parse_ref(primary_scene, secondary_scene,
+                        ref = self.cParseRef(primary_scene, secondary_scene,
                                                                     entrypoint["ref"],
                                                                     entrypoint["line_num"],
                                                                     entrypoint["scope_tree"],
@@ -425,7 +425,7 @@ class Compiler(object):
 
                     # create the secondary scene
                     self.data[primary_scene][secondary_scene] \
-                            = self.i_parse_fields(scene["fields"], default, self.scene_types_fields,
+                            = self.cParseFields(scene["fields"], default, self.scene_types_fields,
                                                   primary_scene,
                                                   secondary_scene,
                                                   primary_scene + "." + secondary_scene)
@@ -434,7 +434,7 @@ class Compiler(object):
                         interaction_content = scene["interactions"][interaction_name]
 
                         self.data[primary_scene][secondary_scene][self.co["output.interactions"]][interaction_name] \
-                            = self.i_parse_interaction(interaction_content, primary_scene, secondary_scene)
+                            = self.cParseInteraction(interaction_content, primary_scene, secondary_scene)
         
         self.logger.end()
-        self.i_parse_required()
+        self.cParseRequired()

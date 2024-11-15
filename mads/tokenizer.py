@@ -35,7 +35,7 @@ class Tokenizer(object):
         self.ADHOC = re.compile(REGEX["ADHOC"]+REGEX["COMMENT"])
         self.PREPROCESSER = re.compile(REGEX["PREPROCESSER"]+REGEX["COMMENT"])
     
-    def i_make_tag(self, npc_id, secondary_scene, value):
+    def cMakeTag(self, npc_id, secondary_scene, value):
         # return values:
         # 1: aux already exists
         # 0: success
@@ -58,7 +58,7 @@ class Tokenizer(object):
         
         return 0
 
-    def i_make_interaction(self, npc_id, secondary_scene, interaction_name, dbg_items):
+    def cMakeInteraction(self, npc_id, secondary_scene, interaction_name, dbg_items):
         # return values:
         # 1: name already exists
         # 0: success
@@ -72,7 +72,7 @@ class Tokenizer(object):
         
         return 0
 
-    def i_add_head_conditional(self, npc_id, secondary_scene, interaction_name, conditional):
+    def cAddHeadConditional(self, npc_id, secondary_scene, interaction_name, conditional):
         self.data[npc_id][secondary_scene]["entrypoints"].append({
                 # make the ref a full ref so the ref_parse function will be ok with it
                 "ref": npc_id + "." + secondary_scene + "." + interaction_name,
@@ -84,7 +84,7 @@ class Tokenizer(object):
                 "file_name": self.file_name
             })
 
-    def i_check_indent(self, indentation):
+    def cCheckIndent(self, indentation):
         if indentation == 0: # top level tag
             # reset all scope
             self.scope_tree = []
@@ -106,7 +106,7 @@ class Tokenizer(object):
             
             return current_indent
     
-    def i_split_scene(self, id):
+    def cSplitSceneRef(self, id):
         split_items = id.split(".")
         non_blank_items = []
 
@@ -128,11 +128,11 @@ class Tokenizer(object):
         m_ref = match.group("ref")
         m_cond = match.group("conditional")
 
-        current_indent = self.i_check_indent(indentation)
+        current_indent = self.cCheckIndent(indentation)
 
         if current_indent == -1: # top level tag, defines a whole interaction menu
             dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
-            primary_scene, secondary_scene = self.i_split_scene(m_id)
+            primary_scene, secondary_scene = self.cSplitSceneRef(m_id)
             self.do_config = False
 
             if m_cond != None:
@@ -151,7 +151,7 @@ class Tokenizer(object):
                     dbg.error("syntax error", ".info cannot be a reference", self.line_num)
 
                 # make a new reference interaction
-                rv = self.i_make_tag(primary_scene, secondary_scene, {
+                rv = self.cMakeTag(primary_scene, secondary_scene, {
                     "type" : "ref",
                     "ref": m_ref,
 
@@ -167,7 +167,7 @@ class Tokenizer(object):
 
             else:
                 # make a new interaction menu
-                rv = self.i_make_tag(primary_scene, secondary_scene, {
+                rv = self.cMakeTag(primary_scene, secondary_scene, {
                     "type" : "config" if self.do_config else "scene",
                     "interactions" : {},
                     "fields" : [],
@@ -203,14 +203,14 @@ class Tokenizer(object):
                 valid_interactions = ["declare.scene", "declare.interaction", "compiler"]
                 if not m_id in valid_interactions:
                     dbg = utils.Debug(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
-                    did_you_mean_text = utils.did_you_mean(m_id, valid_interactions)
+                    did_you_mean_text = utils.didYouMean(m_id, valid_interactions)
                     dbg.error("name error", "the interaction '" + m_id + "' is not allowed here" \
                         + did_you_mean_text, self.line_num)
             
             if m_cond != None:
-                self.i_add_head_conditional(self.scene[0], self.scene[1], m_id, m_cond)
+                self.cAddHeadConditional(self.scene[0], self.scene[1], m_id, m_cond)
 
-            rv = self.i_make_interaction(self.scene[0], self.scene[1], m_id, {
+            rv = self.cMakeInteraction(self.scene[0], self.scene[1], m_id, {
                 "line_num": self.line_num,
                 "scope_lines": self.scope_lines.copy(),
                 "scope_tree": self.scope_tree.copy(),
@@ -234,9 +234,9 @@ class Tokenizer(object):
     def _field(self, match, indentation, f_type):
         m_id = match.group("id")
         m_value = match.group("value")
-        m_condid = utils.try_strip(match.group("conditional"))
+        m_condid = utils.tryStrip(match.group("conditional"))
 
-        current_indent = self.i_check_indent(indentation)
+        current_indent = self.cCheckIndent(indentation)
 
         if current_indent >= 1: # field inside of a interaction
             self.data[self.scene[0]][self.scene[1]]["interactions"][self.scope_tree[current_indent]]["fields"].append({
@@ -267,15 +267,15 @@ class Tokenizer(object):
     def _adhoc(self, match, indentation):
         m_text = match.group("text")
         m_id = match.group("id")
-        m_condid = utils.try_strip(match.group("conditional"))
+        m_condid = utils.tryStrip(match.group("conditional"))
 
-        current_indent = self.i_check_indent(indentation)
+        current_indent = self.cCheckIndent(indentation)
 
         if current_indent >= 1: # field inside of a dialouge
             if m_id == None:
-                m_id = utils.make_uuid()
+                m_id = utils.makeUuid()
 
-            rv = self.i_make_interaction(self.scene[0], self.scene[1], m_id, {
+            rv = self.cMakeInteraction(self.scene[0], self.scene[1], m_id, {
                 "line_num": self.line_num,
                 "scope_lines": self.scope_lines.copy(),
                 "scope_tree": self.scope_tree.copy(),
@@ -307,9 +307,9 @@ class Tokenizer(object):
     def _option(self, match, indentation):
         m_text = match.group("text")
         m_ref = match.group("ref")
-        m_condid = utils.try_strip(match.group("conditional"))
+        m_condid = utils.tryStrip(match.group("conditional"))
 
-        current_indent = self.i_check_indent(indentation)
+        current_indent = self.cCheckIndent(indentation)
 
         if current_indent >= 1: # field inside of a dialouge
 
@@ -331,12 +331,12 @@ class Tokenizer(object):
     def _dialouge(self, match, indentation):
         m_text = match.group("text")
 
-        current_indent = self.i_check_indent(indentation)
+        current_indent = self.cCheckIndent(indentation)
 
         if current_indent >= 1: # field inside of a dialouge
 
             self.data[self.scene[0]][self.scene[1]]["interactions"][self.scope_tree[current_indent]]["dialouge"].append({
-                "texts": utils.parse_string(m_text),
+                "texts": utils.parseString(m_text),
 
                 "line_num": self.line_num,
                 "scope_lines": self.scope_lines.copy(),

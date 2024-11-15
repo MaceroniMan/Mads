@@ -10,7 +10,7 @@ try:
 except:
   pass
 
-def simple_error(error_type, error_prefix, error_message, error_body):
+def simpleError(error_type, error_prefix, error_message, error_body):
     print("") # make sure to exit the loading bar
 
     print(error_prefix)
@@ -19,29 +19,29 @@ def simple_error(error_type, error_prefix, error_message, error_body):
 
     sys.exit(1)
 
-def make_uuid():
+def makeUuid():
     return str(uuid.uuid4())
 
-def try_strip(obj):
+def tryStrip(obj):
     try:
         return obj.strip()
     except:
         return obj
 
-def try_type(obj, typ):
+def tryType(obj, typ):
     try:
         return (True, typ(obj))
     except:
        return (False, None)
 
-def count_none(lst):
+def countNone(lst):
     cnt = 0
     for i in lst:
         if i == None:
             cnt += 1
     return cnt
 
-def parse_string(string):
+def parseString(string):
     strings = []
     record = None
     escape = False
@@ -66,7 +66,7 @@ def parse_string(string):
     
     return strings
 
-def did_you_mean(term, other_terms):
+def didYouMean(term, other_terms):
     if isinstance(other_terms, dict):
         close_term = difflib.get_close_matches(term, other_terms.keys())
     else:
@@ -113,7 +113,7 @@ class Debug(object):
         body += line
         body += "\n    " + self.c["red"] + "^"*(line_length-5) + self.c["reset"]
 
-        simple_error(self.c["red"] + self.c["bold"] + error_type + self.c["reset"], prefix, error_text, body)
+        simpleError(self.c["red"] + self.c["bold"] + error_type + self.c["reset"], prefix, error_text, body)
 
 # contains the configuration application-wide
 class Options(object):
@@ -166,7 +166,7 @@ class Logger(object):
         # show the cursor
         print('\033[?25h', end="")
     
-    def __calc_time(self):
+    def __calcTime(self):
         if self._time_bar == None:
             self._time_bar = time.time()
         remaining = ((time.time() - self._time_bar) / self.bar_cnt) * (self.bar_max - self.bar_cnt)
@@ -222,7 +222,7 @@ class Logger(object):
 
         self._bar_string = percent_str \
             + " [" + self.c["green"] + "#"*length +  self.c["red"] + "-"*whitespace + self.c["reset"] + "] " \
-            + self.c["bold"] + self.__calc_time() + " " \
+            + self.c["bold"] + self.__calcTime() + " " \
             + str(self.bar_cnt) + "/" + str(self.bar_max) + self.c["reset"]
 
         print(self._bar_string, end="\r", flush=True)

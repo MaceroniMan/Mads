@@ -68,7 +68,7 @@ def parseArgs(args_obj):
   log = utils.Logger(options.log_severity, 60, not options.boring)
   
   if do_compile:
-    import_code, import_body = pre.parse_file(args_obj.input)
+    import_code, import_body = pre.parseFile(args_obj.input)
     if import_code == -1:
       error("file '" + args_obj.input + "' does not exist")
     elif import_code == -2:
