@@ -63,7 +63,7 @@ def parseArgs(args_obj):
   options.end_format = args_obj.format
   options.segment = args_obj.segment
   options.boring = args_obj.boring
-  options.todopath = args_obj.todo
+  options.notodo = args_obj.notodo
 
   log = utils.logger(options.log_severity, 60, not options.boring)
   
@@ -109,7 +109,7 @@ if __name__ == "__main__":
   args_parser.add_argument("--boring", "-B", action="store_true")
   args_parser.add_argument("--silent", "-Q", action="store_true") # TODO: implement
 
-  args_parser.add_argument("--notodo", "-T", action="store_true") # TODO: implement
+  args_parser.add_argument("--notodo", "-T", action="store_true")
   args_parser.add_argument("--format", "-f", action="store", choices=["json", "pickle", "xml"], default="json")
   args_parser.add_argument("--level", "-l", action="store", choices=[0, 1, 2, 3, 4], default=2, type=int)
 

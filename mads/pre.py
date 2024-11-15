@@ -38,9 +38,6 @@ class preprocesser(object):
         self.return_lines = [(0, file_name, -1, FILENAME_LINE)]
 
         self.PREPROCESSER = re.compile(REGEX["PREPROCESSER"]+REGEX["COMMENT"])
-    
-    def i_todo_log(self, todo_text):
-        pass
 
     def _if(self):
         pass
@@ -119,10 +116,10 @@ class preprocesser(object):
 
             line = line.lstrip()
 
-            if (todo_idx := line.find("//TODO:")) != -1:
+            # do todo logic
+            if (todo_idx := line.find("//TODO:")) != -1 and not self.options.notodo:
                 todo_text = line[todo_idx+7:]
                 loc = self.file_name + " on " + str(virtual_line_num)
-                self.i_todo_log(loc + ":" + todo_text)
                 todo_text = todo_text.replace("<", self.logger.c["blue"] + self.logger.c["bold"]).replace(">", self.logger.c["reset"])
                 self.logger.log(loc, todo_text, -1)
 
