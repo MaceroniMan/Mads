@@ -233,7 +233,7 @@ class tokenizer(object):
 
     def _field(self, match, indentation, f_type):
         m_id = match.group("id")
-        m_ref = match.group("value")
+        m_value = match.group("value")
         m_condid = utils.try_strip(match.group("conditional"))
 
         current_indent = self.i_check_indent(indentation)
@@ -241,7 +241,7 @@ class tokenizer(object):
         if current_indent >= 1: # field inside of a interaction
             self.data[self.scene[0]][self.scene[1]]["interactions"][self.scope_tree[current_indent]]["fields"].append({
                 "id": m_id,
-                "value": m_ref,
+                "value": str(m_value),
                 "conditional": m_condid,
                 "type": f_type,
                 "line_num": self.line_num,
@@ -252,7 +252,7 @@ class tokenizer(object):
         elif current_indent == 0: # field inside of a scene
             self.data[self.scene[0]][self.scene[1]]["fields"].append({
                 "id": m_id,
-                "value": m_ref,
+                "value": str(m_value),
                 "conditional": m_condid,
                 "type": f_type,
                 "line_num": self.line_num,

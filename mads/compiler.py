@@ -61,28 +61,65 @@ class compiler(object):
             dbg = utils.dbg(self.logger, field["scope_tree"], field["scope_lines"], self.lines, field["file_name"])
             line_num = field["line_num"]
 
-            # cannot have a key the same as the dialouge or options menus
-            if field["id"] in (self.co["output.dialouge"], self.co["output.options"]):
+            # cannot have a key the same as any of the required items in output
+            if field["id"] in (self.co["output.dialouge"], self.co["output.options"], self.co["output.interactions"]):
                 dbg.error("field error", "invalid field name", line_num)
             
-            # add the entrypoints field different
+            field_value = ""
+            # set the correct types
+            if field["type"] == "reference-id":
+                field_value = self.i_parse_ref(primary_scene, secondary_scene,
+                                                                field["value"],
+                                                                field["line_num"],
+                                                                field["scope_tree"],
+                                                                field["scope_lines"],
+                                                                field["file_name"])
+            elif field["type"] == "number":
+                try:
+                    field_value = int(field["value"])
+                except ValueError:
+                    dbg.error("field error", "invalid sytanx for a integer field", line_num)
+            else:
+                field_value = field["value"]
+
+            
+            # add the entrypoints field (from entrypoints syntax)
             if field["id"] == self.co["output.entrypoints"]:
-                if field["conditional"] != None:
-                    ref = self.i_parse_ref(primary_scene, secondary_scene,
-                                                                    field["value"],
-                                                                    field["line_num"],
-                                                                    field["scope_tree"],
-                                                                    field["scope_lines"],
-                                                                    field["file_name"])
-                    rv[self.co["output.entrypoints"]].insert(0, [field["conditional"], ref])
+                if field["conditional"] is not None: # entrypoints MUST BE a conditional
+                    if field["type"] != "reference-id": # and must a reference id
+                        dbg.error("field error", "as the predefined entrypoints field, '" + field["conditional"] + "' must be either a string or a reference id" , line_num)
+                    # reference id is checked above
+                    rv[self.co["output.entrypoints"]].insert(0, [field["conditional"], field_value])
                 else:
-                    dbg.error("field error", "as a predefined field, '" + field["conditional"] + "' must be a conditional type" , line_num)
+                    dbg.error("field error", "as a predefined entrypoints field, '" + field["conditional"] + "' must be a conditional type" , line_num)
 
             elif field["id"] in current_fields:
-                if field["id"] in types:
-                    if types[field["id"]] == "value":
-                        dbg.error("field error", "type of field does not match static type", line_num)
-                    
+
+                # TODO: re-implement typing system
+                #if field["id"] in types:
+                #    if types[field["id"]] == "value":
+                #        dbg.error("field error", "type of field does not match static type", line_num)
+
+                stored_field = current_fields[field["id"]]
+
+                if stored_field[3] != field["type"]:
+                    dbg.error("field error", "type of field does not match the previous type definitions", line_num)
+                
+                if stored_field[3] == "script":
+                    dbg.error("field error", "a field with a type of 'script' cannot be a list", line_num)
+                
+                # does new field have a conditional, stored general type
+                match (field["conditional"] is not None, stored_field[2]):
+                    case (True, "conditional"): # already set as conditional
+                        current_fields[field["id"]][0].append(field_value)
+                        current_fields[field["id"]][1].append(field["conditional"])
+                    case (True, "list"): # wants to be conditional but set as list
+                        dbg.error("field error", "cannot intermix lists and conditional lists for the same field", line_num)
+                    case (False, "value" | "list"): # does not want to be conditional and set as list or value
+                        current_fields[field["id"]][0].append(field_value)
+                        current_fields[field["id"]][2] = "list"
+                
+                """ # OLD CODE
                 match (field["conditional"] != None, len(current_fields[field["id"]][1]) != 0):
                     case (True, True): # already set as conditional and currently conditional
                         if field["id"] in types:
@@ -101,18 +138,28 @@ class compiler(object):
                         current_fields[field["id"]][2] = "list"
                     case (_, _):
                         dbg.error("field error", "type of field does not match static type", line_num)
+                """
             else:
-                if field["conditional"] != None:
+                if field["type"] == "script":
                     current_fields[field["id"]] = [
-                        [field["value"]], # values
+                        [field["conditional"]], # values
+                        [], # conditionals
+                        "value", # general type
+                        "script" # value type
+                    ]
+                elif field["conditional"] != None:
+                    current_fields[field["id"]] = [
+                        [field_value], # values
                         [field["conditional"]], # conditionals
-                        "conditional" # type
+                        "conditional", # general type
+                        field["type"] # value type
                     ]
                 else:
                     current_fields[field["id"]] = [
-                        [field["value"]], # values
+                        [field_value], # values
                         [], # conditionals
-                        "value" # type
+                        "value", # general type
+                        field["type"] # value type
                     ]
 
         self.logger.log("compiler", "writing fields " + parent_name, 4)
@@ -134,6 +181,7 @@ class compiler(object):
         full_ref = ""
         dbg = utils.dbg(self.logger, scope_tree, scope_lines, self.lines, file_name)
 
+        # is a local ref
         if ref.startswith("$."):
             if len(ref[2:]) == 0:
                 dbg.error("reference error", "invalid local reference format", line_num)
