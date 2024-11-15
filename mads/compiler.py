@@ -65,9 +65,18 @@ class compiler(object):
             if field["id"] in (self.co["output.dialouge"], self.co["output.options"], self.co["output.interactions"]):
                 dbg.error("field error", "invalid field name", line_num)
             
+            if field["id"] in types:
+                # does not match static type
+                if field["type"] != types[field["id"]]:
+                    dbg.error("field error", "type of field does not match static type", line_num)
+                else:
+                    self.logger.log("compiler", "typed " + field["id"] + " as " + field["type"] + " statically", 4)
+            else:
+                self.logger.log("compiler", "typed " + field["id"] + " as " + field["type"] + " dynamically", 4)
+
             field_value = ""
             # set the correct types
-            if field["type"] == "reference-id":
+            if field["type"] == "ref-id":
                 field_value = self.i_parse_ref(primary_scene, secondary_scene,
                                                                 field["value"],
                                                                 field["line_num"],
@@ -78,7 +87,7 @@ class compiler(object):
                 try:
                     field_value = int(field["value"])
                 except ValueError:
-                    dbg.error("field error", "invalid sytanx for a integer field", line_num)
+                    dbg.error("value error", "invalid syntax for a integer field", line_num)
             else:
                 field_value = field["value"]
 
@@ -86,7 +95,7 @@ class compiler(object):
             # add the entrypoints field (from entrypoints syntax)
             if field["id"] == self.co["output.entrypoints"]:
                 if field["conditional"] is not None: # entrypoints MUST BE a conditional
-                    if field["type"] != "reference-id": # and must a reference id
+                    if field["type"] != "ref-id": # and must a reference id
                         dbg.error("field error", "as the predefined entrypoints field, '" + field["conditional"] + "' must be either a string or a reference id" , line_num)
                     # reference id is checked above
                     rv[self.co["output.entrypoints"]].insert(0, [field["conditional"], field_value])
@@ -94,16 +103,10 @@ class compiler(object):
                     dbg.error("field error", "as a predefined entrypoints field, '" + field["conditional"] + "' must be a conditional type" , line_num)
 
             elif field["id"] in current_fields:
-
-                # TODO: re-implement typing system
-                #if field["id"] in types:
-                #    if types[field["id"]] == "value":
-                #        dbg.error("field error", "type of field does not match static type", line_num)
-
                 stored_field = current_fields[field["id"]]
 
                 if stored_field[3] != field["type"]:
-                    dbg.error("field error", "type of field does not match the previous type definitions", line_num)
+                    dbg.error("field error", "type of field does not match the previous type definitions (dynamic type)", line_num)
                 
                 if stored_field[3] == "script":
                     dbg.error("field error", "a field with a type of 'script' cannot be a list", line_num)
@@ -118,27 +121,6 @@ class compiler(object):
                     case (False, "value" | "list"): # does not want to be conditional and set as list or value
                         current_fields[field["id"]][0].append(field_value)
                         current_fields[field["id"]][2] = "list"
-                
-                """ # OLD CODE
-                match (field["conditional"] != None, len(current_fields[field["id"]][1]) != 0):
-                    case (True, True): # already set as conditional and currently conditional
-                        if field["id"] in types:
-                            if types[field["id"]] != "conditional":
-                                dbg.error("field error", "type of field does not match static type", line_num)
-
-                        current_fields[field["id"]][0].append(field["value"])
-                        current_fields[field["id"]][1].append(field["conditional"])
-                        current_fields[field["id"]][2] = "conditional"
-                    case (False, False): # not a conditional and was never a conditional
-                        if field["id"] in types:
-                            if types[field["id"]] != "list":
-                                dbg.error("field error", "type of field does not match static type", line_num)
-
-                        current_fields[field["id"]][0].append(field["value"])
-                        current_fields[field["id"]][2] = "list"
-                    case (_, _):
-                        dbg.error("field error", "type of field does not match static type", line_num)
-                """
             else:
                 if field["type"] == "script":
                     current_fields[field["id"]] = [
@@ -361,8 +343,18 @@ class compiler(object):
                                     self.interaction_require.append(field["values"][-1])
                                 case [_, "field", "require"]:
                                     dbg.error("name error", "incorrect location for require", field["line_nums"][-1])
-                                case ["declare.scene" | "declare.interaction", "field", "types", x]:
-                                    self.scene_types_fields[x] = field["values"][-1]
+                                case ["declare.scene", "field", "types", x]:
+                                    givin_type = field["values"][-1]
+                                    if givin_type in ["script", "number", "string", "ref-id"]:
+                                        self.scene_types_fields[x] = givin_type
+                                    else:
+                                        dbg.error("value error", "'" + givin_type + "' is not a valid type", field["line_nums"][-1])
+                                case ["declare.interaction", "field", "types", x]:
+                                    givin_type = field["values"][-1]
+                                    if givin_type in ["script", "number", "string", "ref-id"]:
+                                        self.interaction_types_fields[x] = givin_type
+                                    else:
+                                        dbg.error("value error", "'" + givin_type + "' is not a valid type", field["line_nums"][-1])
                                 case [_, "field", "types", _]:
                                     dbg.error("name error", "incorrect location for type definition", field["line_nums"][-1])
                                 case ["compiler", *_]:

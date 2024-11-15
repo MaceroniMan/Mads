@@ -376,7 +376,7 @@ class tokenizer(object):
                 elif (match := self.FIELD_NUMBER.match(line)) != None:
                     self._field(match, indentation, "number")
                 elif (match := self.FIELD_REFERENCE_ID.match(line)) != None:
-                    self._field(match, indentation, "reference-id")
+                    self._field(match, indentation, "ref-id")
                 elif (match := self.FIELD_SCRIPT.match(line)) != None:
                     self._field(match, indentation, "script")
                 elif (match := self.ADHOC.match(line)) != None:
