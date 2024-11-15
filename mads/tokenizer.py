@@ -26,8 +26,10 @@ class tokenizer(object):
         self.do_config = False # currently in the .info
 
         self.TAG = re.compile(REGEX["TAG"]+REGEX["COMMENT"])
-        self.FIELD_UNQUOTE = re.compile(REGEX["FIELD_UNQUOTE"]+REGEX["COMMENT"])
-        self.FIELD_QUOTE = re.compile(REGEX["FIELD_QUOTE"]+REGEX["COMMENT"])
+        self.FIELD_REFERENCE_ID = re.compile(REGEX["FIELD_REFERENCE_ID"]+REGEX["COMMENT"])
+        self.FIELD_STRING = re.compile(REGEX["FIELD_STRING"]+REGEX["COMMENT"])
+        self.FIELD_NUMBER = re.compile(REGEX["FIELD_NUMBER"]+REGEX["COMMENT"])
+        self.FIELD_SCRIPT = re.compile(REGEX["FIELD_SCRIPT"]+REGEX["COMMENT"])
         self.DIALOUGE = re.compile(REGEX["DIALOUGE"]+REGEX["COMMENT"])
         self.OPTION = re.compile(REGEX["OPTION"]+REGEX["COMMENT"])
         self.ADHOC = re.compile(REGEX["ADHOC"]+REGEX["COMMENT"])
@@ -229,28 +231,30 @@ class tokenizer(object):
             # tag exists somewhere it is not supposed to
             dbg.error("syntax error", "cannot defign a interaction here", self.line_num)
 
-    def _field(self, match, indentation):
+    def _field(self, match, indentation, f_type):
         m_id = match.group("id")
         m_ref = match.group("value")
         m_condid = utils.try_strip(match.group("conditional"))
 
         current_indent = self.i_check_indent(indentation)
 
-        if current_indent >= 1: # field inside of a dialouge
+        if current_indent >= 1: # field inside of a interaction
             self.data[self.scene[0]][self.scene[1]]["interactions"][self.scope_tree[current_indent]]["fields"].append({
                 "id": m_id,
                 "value": m_ref,
                 "conditional": m_condid,
+                "type": f_type,
                 "line_num": self.line_num,
                 "scope_lines": self.scope_lines.copy(),
                 "scope_tree": self.scope_tree.copy(),
                 "file_name": self.file_name
             })
-        elif current_indent == 0: # field inside of a dialouge menu
+        elif current_indent == 0: # field inside of a scene
             self.data[self.scene[0]][self.scene[1]]["fields"].append({
                 "id": m_id,
                 "value": m_ref,
                 "conditional": m_condid,
+                "type": f_type,
                 "line_num": self.line_num,
                 "scope_lines": self.scope_lines.copy(),
                 "scope_tree": self.scope_tree.copy(),
@@ -367,10 +371,14 @@ class tokenizer(object):
 
                 if (match := self.TAG.match(line)) != None:
                     self._tag(match, indentation)
-                elif (match := self.FIELD_UNQUOTE.match(line)) != None:
-                    self._field(match, indentation)
-                elif (match := self.FIELD_QUOTE.match(line)) != None:
-                    self._field(match, indentation)
+                elif (match := self.FIELD_STRING.match(line)) != None:
+                    self._field(match, indentation, "string")
+                elif (match := self.FIELD_NUMBER.match(line)) != None:
+                    self._field(match, indentation, "number")
+                elif (match := self.FIELD_REFERENCE_ID.match(line)) != None:
+                    self._field(match, indentation, "reference-id")
+                elif (match := self.FIELD_SCRIPT.match(line)) != None:
+                    self._field(match, indentation, "script")
                 elif (match := self.ADHOC.match(line)) != None:
                     if self.do_config:
                         dbg = utils.dbg(self.logger, self.scope_tree, self.scope_lines, self.lines, self.file_name)
