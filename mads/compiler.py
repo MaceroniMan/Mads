@@ -63,7 +63,7 @@ class Compiler(object):
             # cannot have a key the same as any of the required items in output
             if field["id"] in (self.co["output.dialouge"], self.co["output.options"], self.co["output.interactions"]):
                 dbg.error("field error", "invalid field name", line_num)
-            
+
             if field["id"] in types:
                 # does not match static type
                 if field["type"] != types[field["id"]]:
@@ -90,7 +90,6 @@ class Compiler(object):
             else:
                 field_value = field["value"]
 
-            
             # add the entrypoints field (from entrypoints syntax)
             if field["id"] == self.co["output.entrypoints"]:
                 if field["conditional"] is not None: # entrypoints MUST BE a conditional
@@ -106,10 +105,10 @@ class Compiler(object):
 
                 if stored_field[3] != field["type"]:
                     dbg.error("field error", "type of field does not match the previous type definitions (dynamic type)", line_num)
-                
+
                 if stored_field[3] == "script":
                     dbg.error("field error", "a field with a type of 'script' cannot be a list", line_num)
-                
+
                 # does new field have a conditional, stored general type
                 match (field["conditional"] is not None, stored_field[2]):
                     case (True, "conditional"): # already set as conditional

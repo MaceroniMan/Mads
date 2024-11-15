@@ -72,7 +72,9 @@ class Tokenizer(object):
         
         return 0
 
-    def cAddHeadConditional(self, npc_id, secondary_scene, interaction_name, conditional):
+    def cAddEntrypointConditional(self, npc_id, secondary_scene, interaction_name, conditional):
+        # this goes in a seperate place that standard options to be handled by 
+        # the compiler later
         self.data[npc_id][secondary_scene]["entrypoints"].append({
                 # make the ref a full ref so the ref_parse function will be ok with it
                 "ref": npc_id + "." + secondary_scene + "." + interaction_name,
@@ -208,7 +210,7 @@ class Tokenizer(object):
                         + did_you_mean_text, self.line_num)
             
             if m_cond != None:
-                self.cAddHeadConditional(self.scene[0], self.scene[1], m_id, m_cond)
+                self.cAddEntrypointConditional(self.scene[0], self.scene[1], m_id, m_cond)
 
             rv = self.cMakeInteraction(self.scene[0], self.scene[1], m_id, {
                 "line_num": self.line_num,
@@ -334,7 +336,6 @@ class Tokenizer(object):
         current_indent = self.cCheckIndent(indentation)
 
         if current_indent >= 1: # field inside of a dialouge
-
             self.data[self.scene[0]][self.scene[1]]["interactions"][self.scope_tree[current_indent]]["dialouge"].append({
                 "texts": utils.parseString(m_text),
 
